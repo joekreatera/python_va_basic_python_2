@@ -5,10 +5,22 @@ from random import random
 # 4 stands for vanilla
 
 ball_cost = 10
+
+def clientArrived():
+    c = Customer()
+    i = Icecream( client = c )
+    print(f'C:{c}')
+    return i.getPrice()
+
+
 class Icecream:
-    def __init__(self, bq = 1, fl = 1):
-        self.__ball_qty = bq
-        self.__flavor = fl
+    def __init__(self, client = None , bq = 1, fl = 1):
+        if( client != None):
+            self.__ball_qty = client.getMoney()/ball_cost
+            self.__flavor = client.getFavoriteFlavor()
+        else:
+            self.__ball_qty = bq
+            self.__flavor = fl
     def addBall(self):
         self.__ball_qty = self.__ball_qty + 1
 
@@ -60,38 +72,11 @@ class Customer:
     # asignale a cada cliente un helado del sabor que el prefiere e indica la ganancia de la tienda de helados
     # simulando la creacion del cliente (5) clientes, e imprimiendo el sabor que escogieron y las cantidad de helado.
 
-ic1 = Icecream()
-print(f'q:{ic1.getBallQty()} f:{ic1.getFlavor()}')
-ic2 = Icecream()
-print(f'q:{ic2.getBallQty()} f:{ic2.getFlavor()}')
-ic2.addBall()
-ic2.setFlavor(2)
-print(f'q:{ic2.getBallQty()} f:{ic2.getFlavor()}')
-
 amt = 0
-c = Customer()
-i = Icecream( int(c.getMoney()/ball_cost) , c.getFavoriteFlavor() )
-amt = amt + i.getPrice()
-print(f'c:{c}')
-
-c = Customer()
-i = Icecream( int(c.getMoney()/ball_cost) , c.getFavoriteFlavor() )
-amt = amt + i.getPrice()
-print(f'c:{c}')
-
-c = Customer()
-i = Icecream( int(c.getMoney()/ball_cost) , c.getFavoriteFlavor() )
-amt = amt + i.getPrice()
-print(f'c:{c}')
-
-c = Customer()
-i = Icecream( int(c.getMoney()/ball_cost) , c.getFavoriteFlavor() )
-amt = amt + i.getPrice()
-print(f'c:{c}')
-
-c = Customer()
-i = Icecream( int(c.getMoney()/ball_cost) , c.getFavoriteFlavor() )
-amt = amt + i.getPrice()
-print(f'c:{c}')
+amt = amt + clientArrived()
+amt = amt + clientArrived()
+amt = amt + clientArrived()
+amt = amt + clientArrived()
+amt = amt + clientArrived()
 
 print(f'Ganacia: {amt}')
