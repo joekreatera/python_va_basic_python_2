@@ -1,5 +1,7 @@
 # 1 stands for strawberry
 # 2 stands for chocolate
+# 3 stands for grape
+# 4 stands for vanilla
 
 class Icecream:
     def __init__(self):
@@ -19,6 +21,14 @@ class Icecream:
             self.__flavor = f
         else:
             print("Flavor not recognized")
+
+class Customer:
+    # debe tener un nombre Jesus, iva, Jose, Pedro, maria, Liz, Dayra, Roberta, y un sabor preferido
+    # debe tener un sabor preferido entre 1 y 4
+    # tiene una cantidad de dinero en su bolsillo
+    # cada helado tiene un precio asociado por bola de helado de 10 pesos
+    # asignale a cada cliente un helado del sabor que el prefiere e indica la ganancia de la tienda de helados
+    # simulando la creacion del cliente (5) clientes, e imprimiendo el sabor que escogieron y las cantidad de helado.
 
 ic1 = Icecream()
 print(f'q:{ic1.getBallQty()} f:{ic1.getFlavor()}')
