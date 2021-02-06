@@ -1,4 +1,6 @@
 from random import random
+
+# 0 stands for multiple
 # 1 stands for strawberry
 # 2 stands for chocolate
 # 3 stands for grape
@@ -8,19 +10,27 @@ ball_cost = 10
 
 def clientArrived():
     c = Customer()
-    i = Icecream( client = c )
+    i = None
+
+    if(random() > 0.5):
+        i = Icecream( client = c )
+    else:
+        i = BananaSplitIcecream( client = c )
+
     print(f'C:{c}')
+
     return i.getPrice()
 
 
 class Icecream:
     def __init__(self, client = None , bq = 1, fl = 1):
         if( client != None):
-            self.__ball_qty = client.getMoney()/ball_cost
+            self.__ball_qty = int(client.getMoney()/ball_cost)
             self.__flavor = client.getFavoriteFlavor()
         else:
             self.__ball_qty = bq
             self.__flavor = fl
+        print(f'Icrecream flavor {self.__flavor}  with ball_qty {self.__ball_qty} ')
     def addBall(self):
         self.__ball_qty = self.__ball_qty + 1
 
@@ -31,13 +41,31 @@ class Icecream:
         return self.__flavor
 
     def setFlavor(self, f = 1):
-        if( f >= 1 and f <= 4 ):
+        if( f >= 0 and f <= 4 ):
             self.__flavor = f
         else:
             print("Flavor not recognized")
 
     def getPrice(self):
         return self.__ball_qty*ball_cost
+
+class BananaSplitIcecream(Icecream):
+    def __init__(self, client = None):
+        if( client == None):
+            super().__init__(bq=0, fl = 0)
+            print('No icecream dude')
+
+        if( client != None):
+            if( client.getMoney() >= 3*ball_cost ):
+                super().__init__(bq=3, fl = 0)
+            else:
+                super().__init__(bq=0, fl = 0)
+                print('No icecream dude')
+
+    def setFlavor(self, f):
+        print(f'Cannot change Banana Split Icecream flavor')
+    def addBall(self):
+        print(f'Cannot change Banana Split Icecream balls')
 
 class Customer:
     def __init__(self):
@@ -78,5 +106,7 @@ amt = amt + clientArrived()
 amt = amt + clientArrived()
 amt = amt + clientArrived()
 amt = amt + clientArrived()
+
+bs= BananaSplitIcecream()
 
 print(f'Ganacia: {amt}')
