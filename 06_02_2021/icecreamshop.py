@@ -107,6 +107,5 @@ amt = amt + clientArrived()
 amt = amt + clientArrived()
 amt = amt + clientArrived()
 
-bs= BananaSplitIcecream()
 
 print(f'Ganacia: {amt}')
