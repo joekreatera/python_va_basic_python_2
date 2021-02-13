@@ -1,3 +1,4 @@
+from math import sqrt
 from random import random
 """
  ORC: 1000-2500
@@ -15,6 +16,9 @@ MAX_GRID_UNITS_Y = 100
 def getRandomBetween(min,max):
     return random()*(max-min)+min
 
+def getDistance(x1,y1,x2,y2):
+    return sqrt( (x2-x1)**2 + (y2-y1)**2  )
+
 class Creature:
     def __init__(self):
         self.magic = 0
@@ -29,7 +33,26 @@ class Creature:
         self.magic_mult = 1
         self.x = int(getRandomBetween(0,MAX_GRID_UNITS_X))
         self.y = int(getRandomBetween(0,MAX_GRID_UNITS_Y))
-
+        self.opponent = None
+        self.mate = None
+    def setOpponent(self,opp):
+        self.opponent = opp
+    def getOpponent(self):
+        return self.opponent
+    def setMate(self, m):
+        self.mate = m
+    def isFighting(self):
+        return self.opponent is not  None
+    def isMating(self):
+        return self.mate is not  None
+    def getX(self):
+        return self.x
+    def getY(self):
+        return self.y
+    def getSpeedX(self):
+        return self.speed_x
+    def getSpeedY(self):
+        return self.speed_y
     def getItem(self, item):
         return True
     def getHit(self):
@@ -46,8 +69,8 @@ class Creature:
     def invertSpeedY(self):
         self.speed_y = self.speed_y * -1
     def newSpeed(self):
-        self.speed_x = getRandomBetween(-8,8)
-        self.speed_y = getRandomBetween(-8,8)
+        self.speed_x = int(getRandomBetween(-8,8))
+        self.speed_y = int(getRandomBetween(-8,8))
     def __str__(self):
         # https://stackoverflow.com/questions/45310254/fixed-digits-after-decimal-with-f-strings
         return f'(x:{self.x} y:{self.y} l:{self.life:.2f} m:{self.magic:.2f} s:{self.strength:.2f})'
@@ -98,13 +121,72 @@ class World:
             self.creatures.append( Elf() )
         for i in range(0,orcs):
             self.creatures.append( Orc() )
+        """
         for i in range(0,trolls):
             self.creatures.append( Troll() )
+        """
+
+    def moveCreature(self , creature , days):
+
+        if(days%5 == 0):
+            creature.newSpeed()
+        if( creature.getX()+creature.getSpeedX() > MAX_GRID_UNITS_X and creature.getSpeedX() > 0 ):
+            creature.invertSpeedX()
+        if( creature.getX()+creature.getSpeedX() < 0 and creature.getSpeedX() < 0 ):
+            creature.invertSpeedX()
+
+        if( creature.getY()+creature.getSpeedY() > MAX_GRID_UNITS_Y and creature.getSpeedY() > 0 ):
+            creature.invertSpeedY()
+        if( creature.getY()+creature.getSpeedY() < 0  and creature.getSpeedY() < 0):
+            creature.invertSpeedY()
+        creature.move()
+
+    def fight(self, c1, c2):
+        print("fight")
+
+        if( not c1.isFighting() and  not c2.isFighting() and c1.isAlive() and c2.isAlive() and not c1.isMating() and not c2.isMating() ):
+            print("fighting!!!")
+            c1.setOpponent(c2)
+            c2.setOpponent(c1)
+
+        if c1.getOpponent() is c2:
+            print("fighting!!! c2")
+            c1.setDamage(c2.getHit())
+            c2.setDamage(c1.getHit())
+
+        if not (c1.isAlive() and c2.isAlive()):
+            print("WIN!! g!!!")
+
+            c1.getOpponent(None)
+            c2.getOpponent(None)
+
+    def horde(self, c1, c2):
+        print("horde")
+        return 0
+
 
     def update(self):
         self.day = self.day + 1
+        for i in range(0,len(self.creatures)):
+            isFighting = False
+            a = self.creatures[i]
+            for j in range(i+1, len(self.creatures) ) :
+                b =self.creatures[j]
+                d = getDistance( a.getX(), a.getY(), b.getX() , b.getY())
+                if d <= 100:
+                    if type(a) == type(b):
+                        self.horde(a,b)
+                    else:
+                        self.fight(a,b)
+
+            if not isFighting:
+                self.moveCreature(a, self.day)
+
+    def debug(self):
+        creatures = ""
         for i in self.creatures:
-            i.move()
+            creatures =  creatures + f' {i}'
+        print(creatures)
 
     def __str__(self):
 
@@ -120,6 +202,10 @@ class World:
         Trolls\n{self.trolls}'
 
 w = World(1,1,1)
-for i in range(0,2):
+
+
+
+for i in range(0,6):
     w.update()
+    #w.debug()
     print(f'{w}')
