@@ -1,7 +1,6 @@
 # BattleForMiddleEarth
  battle for middle earth with orcs and elves
 
- ## Update 13-06-19
  Battle for middle earth: In this program, Orcs and Elfs will have to fight. Orcs and Elfs are CREATURES of the Middle Earth, and they should be modeled as such. Trolls are around and can EAT any CREATURE in Middle Earth.
 
  Orcs and Elfs start around a 100x100 unit grid (logically) in which they can  get together and start walking as a horde.  Two Creatures cannot be occupying the same place at the same time, so, when moving, be careful that the position the creature is heading to, does not have another creature already.
