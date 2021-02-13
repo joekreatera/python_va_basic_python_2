@@ -23,7 +23,7 @@ class Horde:
     def __init__(self):
         self.members = []
         self.opponent = None
-    def addMember(creature):
+    def addMember(self, creature):
         self.members.append(creature)
 
     def setOpponent(self, opp):
@@ -132,11 +132,11 @@ class World:
         self.day = 0
         self.trolls = []
 
-        for i in range(0,elfs):
+        for i in range(0,elfs+1):
             self.creatures.append( Elf() )
-        for i in range(0,orcs):
+        """for i in range(0,orcs):
             self.creatures.append( Orc() )
-        """
+
         for i in range(0,trolls):
             self.creatures.append( Troll() )
         """
@@ -171,6 +171,7 @@ class World:
                 c2.setOpponent(None)
 
     def horde(self, c1, c2):
+        print("horde!")
         if( not c1.isFighting() and  not c2.isFighting() and c1.isAlive() and c2.isAlive() and not c1.isMating() and not c2.isMating() ):
             c1.setMate(c2)
             c2.setMate(c1)
@@ -178,6 +179,9 @@ class World:
             h = Horde()
             h.addMember(c1)
             h.addMember(c2)
+
+            return h
+        return None
 
     def update(self):
         self.day = self.day + 1
@@ -187,9 +191,14 @@ class World:
             for j in range(i+1, len(self.creatures) ) :
                 b =self.creatures[j]
                 d = getDistance( a.getX(), a.getY(), b.getX() , b.getY())
-                if d <= 100:
+                if d <= 50:
                     if type(a) == type(b):
-                        self.horde(a,b)
+                        h = self.horde(a,b)
+                        if h is not None:
+                            if type(a) is Elf:
+                                self.elf_hordes.append(h)
+                            if type(a) is Orc:
+                                self.elf_hordes.append(h)
                     else:
                         self.fight(a,b)
 
@@ -199,13 +208,12 @@ class World:
         c = 0
         alive = []
         keep = True
-        while keep :
+        while keep and len(self.creatures) > 0  :
             # self.creatures[:c]
             # self.creatures[c+1:]
-            if self.creatures[c].isAlive():
-                alive.append( self.creatures[c] )
             if not self.creatures[c].isMating():
-                alive.append( self.creatures[c] )
+                if self.creatures[c].isAlive():
+                    alive.append( self.creatures[c] )
             else:
                 self.creatures[c].setMate(None)
             c = c+1
