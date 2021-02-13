@@ -157,8 +157,8 @@ class World:
         if not (c1.isAlive() and c2.isAlive()):
             print("WIN!! g!!!")
 
-            c1.getOpponent(None)
-            c2.getOpponent(None)
+            c1.setOpponent(None)
+            c2.setOpponent(None)
 
     def horde(self, c1, c2):
         print("horde")
@@ -205,7 +205,7 @@ w = World(1,1,1)
 
 
 
-for i in range(0,6):
+for i in range(0,16):
     w.update()
     #w.debug()
     print(f'{w}')
