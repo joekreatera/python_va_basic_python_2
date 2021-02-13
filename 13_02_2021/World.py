@@ -19,6 +19,21 @@ def getRandomBetween(min,max):
 def getDistance(x1,y1,x2,y2):
     return sqrt( (x2-x1)**2 + (y2-y1)**2  )
 
+class Horde:
+    def __init__(self):
+        self.members = []
+        self.opponent = None
+    def addMember(creature):
+        self.members.append(creature)
+
+    def setOpponent(self, opp):
+        self.opponent =  opp
+    def getOpponent(self):
+        return self.opponent
+    # when fighting the opponent on creature will not be set as there can be many to one Battle
+
+
+
 class Creature:
     def __init__(self):
         self.magic = 0
@@ -142,28 +157,27 @@ class World:
         creature.move()
 
     def fight(self, c1, c2):
-        print("fight")
 
         if( not c1.isFighting() and  not c2.isFighting() and c1.isAlive() and c2.isAlive() and not c1.isMating() and not c2.isMating() ):
-            print("fighting!!!")
             c1.setOpponent(c2)
             c2.setOpponent(c1)
 
         if c1.getOpponent() is c2:
-            print("fighting!!! c2")
             c1.setDamage(c2.getHit())
             c2.setDamage(c1.getHit())
 
-        if not (c1.isAlive() and c2.isAlive()):
-            print("WIN!! g!!!")
-
-            c1.setOpponent(None)
-            c2.setOpponent(None)
+            if not (c1.isAlive() and c2.isAlive()):
+                c1.setOpponent(None)
+                c2.setOpponent(None)
 
     def horde(self, c1, c2):
-        print("horde")
-        return 0
+        if( not c1.isFighting() and  not c2.isFighting() and c1.isAlive() and c2.isAlive() and not c1.isMating() and not c2.isMating() ):
+            c1.setMate(c2)
+            c2.setMate(c1)
 
+            h = Horde()
+            h.addMember(c1)
+            h.addMember(c2)
 
     def update(self):
         self.day = self.day + 1
@@ -181,6 +195,23 @@ class World:
 
             if not isFighting:
                 self.moveCreature(a, self.day)
+
+        c = 0
+        alive = []
+        keep = True
+        while keep :
+            # self.creatures[:c]
+            # self.creatures[c+1:]
+            if self.creatures[c].isAlive():
+                alive.append( self.creatures[c] )
+            if not self.creatures[c].isMating():
+                alive.append( self.creatures[c] )
+            else:
+                self.creatures[c].setMate(None)
+            c = c+1
+            if( c == len(self.creatures)):
+                keep = False
+        self.creatures = alive
 
     def debug(self):
         creatures = ""
