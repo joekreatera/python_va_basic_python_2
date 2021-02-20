@@ -20,18 +20,49 @@ def getDistance(x1,y1,x2,y2):
     return sqrt( (x2-x1)**2 + (y2-y1)**2  )
 
 class Horde:
+    # when fighting the opponent on creature will not be set as there can be many to one Battle
     def __init__(self):
         self.members = []
         self.opponent = None
+        self.x = 0
+        self.y = 0
+        self.speed_x = 0
+        self.speed_y = 0
+        self.mate = None
+
     def addMember(self, creature):
         self.members.append(creature)
-
+    def setMate(self, m):
+        self.mate = m
+    def isFighting(self):
+        return self.opponent is not  None
+    def isMating(self):
+        return self.mate is not  None
     def setOpponent(self, opp):
         self.opponent =  opp
     def getOpponent(self):
         return self.opponent
-    # when fighting the opponent on creature will not be set as there can be many to one Battle
+    def move(self):
+        self.x = self.x + self.speed_x
+        self.y = self.y + self.speed_y
+    def invertSpeedX(self):
+        self.speed_x = self.speed_x * -1
+    def invertSpeedY(self):
+        self.speed_y = self.speed_y * -1
+    def newSpeed(self):
+        self.speed_x = int(getRandomBetween(-8,8))
+        self.speed_y = int(getRandomBetween(-8,8))
+    def getX(self):
+        return self.x
+    def getY(self):
+        return self.y
+    def getSpeedX(self):
+        return self.speed_x
+    def getSpeedY(self):
+        return self.speed_y
+    def __str__()
 
+        return ""
 
 
 class Creature:
@@ -141,20 +172,20 @@ class World:
             self.creatures.append( Troll() )
         """
 
-    def moveCreature(self , creature , days):
+    def moveEntity(self , entity , days):
 
         if(days%5 == 0):
-            creature.newSpeed()
-        if( creature.getX()+creature.getSpeedX() > MAX_GRID_UNITS_X and creature.getSpeedX() > 0 ):
-            creature.invertSpeedX()
-        if( creature.getX()+creature.getSpeedX() < 0 and creature.getSpeedX() < 0 ):
-            creature.invertSpeedX()
+            entity.newSpeed()
+        if( entity.getX()+entity.getSpeedX() > MAX_GRID_UNITS_X and entity.getSpeedX() > 0 ):
+            entity.invertSpeedX()
+        if( entity.getX()+entity.getSpeedX() < 0 and entity.getSpeedX() < 0 ):
+            entity.invertSpeedX()
 
-        if( creature.getY()+creature.getSpeedY() > MAX_GRID_UNITS_Y and creature.getSpeedY() > 0 ):
-            creature.invertSpeedY()
-        if( creature.getY()+creature.getSpeedY() < 0  and creature.getSpeedY() < 0):
-            creature.invertSpeedY()
-        creature.move()
+        if( entity.getY()+entity.getSpeedY() > MAX_GRID_UNITS_Y and entity.getSpeedY() > 0 ):
+            entity.invertSpeedY()
+        if( entity.getY()+entity.getSpeedY() < 0  and entity.getSpeedY() < 0):
+            entity.invertSpeedY()
+        entity.move()
 
     def fight(self, c1, c2):
 
@@ -185,6 +216,26 @@ class World:
 
     def update(self):
         self.day = self.day + 1
+
+        # update move and horde merging
+        for i in range(0, len(self.elf_hordes)):
+            for j in range(i+1, len(self.elf_hordes)):
+                print("do")
+            if not self.elf_hordes[i].isMating() :
+                self.moveEntity(self.elf_hordes[i], self.day)
+
+        # update move and horde merging
+        for i in range(0, len(self.orc_hordes)):
+            for j in range(i+1, len(self.orc_hordes)):
+                print("do")
+            if not  self.orc_hordes[i].isMating() :
+                self.moveEntity(self.orc_hordes[i], self.day)
+
+        # check fighting
+        for i in range(0, len(self.elf_hordes)):
+            for j in range(0, len(self.orc_hordes)):
+                print("do")
+
         for i in range(0,len(self.creatures)):
             isFighting = False
             a = self.creatures[i]
@@ -198,12 +249,12 @@ class World:
                             if type(a) is Elf:
                                 self.elf_hordes.append(h)
                             if type(a) is Orc:
-                                self.elf_hordes.append(h)
+                                self.orc_hordes.append(h)
                     else:
                         self.fight(a,b)
 
             if not isFighting:
-                self.moveCreature(a, self.day)
+                self.moveEntity(a, self.day)
 
         c = 0
         alive = []
