@@ -50,8 +50,8 @@ class Horde:
     def invertSpeedY(self):
         self.speed_y = self.speed_y * -1
     def newSpeed(self):
-        self.speed_x = int(getRandomBetween(-8,8))
-        self.speed_y = int(getRandomBetween(-8,8))
+        self.speed_x = int(getRandomBetween(-4,4))
+        self.speed_y = int(getRandomBetween(-4,4))
     def getX(self):
         return self.x
     def getY(self):
@@ -60,9 +60,11 @@ class Horde:
         return self.speed_x
     def getSpeedY(self):
         return self.speed_y
-    def __str__()
-
-        return ""
+    def __str__(self):
+        res = "" + f'x:{self.x} y:{self.y} sx:{self.speed_x} sy:{self.speed_y} \n'
+        for i in self.members:
+            res = res + f'\n{i}'
+        return res
 
 
 class Creature:
@@ -284,10 +286,19 @@ class World:
         for i in self.creatures:
             creatures =  creatures + f' {i}'
 
+
+        elf_horde_str = ""
+        for i in self.elf_hordes:
+            elf_horde_str =  elf_horde_str + f' {i}'
+
+        orc_horde_str = ""
+        for i in self.orc_hordes:
+            orc_horde_str =  orc_horde_str + f' {i}'
+
         return f'Day:{self.day}\n\
         Creatures\n{creatures}\n\
-        Elves\n{self.elf_hordes}\n\
-        Orcs\n{self.orc_hordes}\n\
+        Elves\n{elf_horde_str}\n\
+        Orcs\n{orc_horde_str}\n\
         Items\n{self.items}\n\
         Trolls\n{self.trolls}'
 
