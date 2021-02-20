@@ -85,7 +85,7 @@ class Horde:
     def __str__(self):
         res = "" + f'x:{self.x} y:{self.y} sx:{self.speed_x} sy:{self.speed_y} \n'
         for i in self.members:
-            res = res + f'\n{i}{i.life}'
+            res = res + f'{i}{i.life}\n'
         return res
 
 
@@ -196,10 +196,10 @@ class World:
         self.trolls = []
 
 
-        for i in range(0,elfs+1):
+        for i in range(0,elfs):
             self.creatures.append( Elf() )
 
-        for i in range(0,orcs+1):
+        for i in range(0,orcs):
             self.creatures.append( Orc() )
 
         """
@@ -287,18 +287,45 @@ class World:
         self.day = self.day + 1
 
         # update move and horde merging
+        hordes_to_remove = []
         for i in range(0, len(self.elf_hordes)):
-            for j in range(i+1, len(self.elf_hordes)):
-                print("do")
-            if not self.elf_hordes[i].isMating() :
-                self.moveEntity(self.elf_hordes[i], self.day)
+            a = self.elf_hordes[i]
+            if( not a.isMating() and not a.isFighting() and a.isAlive()  ):
+                for j in range(i+1, len(self.elf_hordes)):
+                    b = self.elf_hordes[j]
+                    print("do")
+                    if (not a.isMating() and a.isAlive() and not a.isFighting()) and (not b.isMating and b.isAlive() and not b.isFighting()):
+                        a.setMate(b)
+                        b.setMate(a)
+                        a.getMembers().extend(b.getMembers())
+                        hordes_to_remove.append(b)
 
+                if not self.elf_hordes[i].isMating() :
+                    self.moveEntity(self.elf_hordes[i], self.day)
+
+        i = 0
+        h_len = len(hordes_to_remove)
+        while i < h_len:
+            self.elf_hordes.remove(  hordes_to_remove.pop(0)  )
+            i = i+1
+
+        hordes_to_remove = []
         # update move and horde merging
         for i in range(0, len(self.orc_hordes)):
-            for j in range(i+1, len(self.orc_hordes)):
-                print("do")
-            if not  self.orc_hordes[i].isMating() :
-                self.moveEntity(self.orc_hordes[i], self.day)
+            a = self.orc_hordes[i]
+            if( not a.isMating() and not a.isFighting() and a.isAlive()  ):
+                for j in range(i+1, len(self.orc_hordes)):
+                    b = self.orc_hordes[j]
+                    print("do")
+                    if (not a.isMating() and a.isAlive() and not a.isFighting()) and (not b.isMating and b.isAlive() and not b.isFighting()):
+                        a.setMate(b)
+                        b.setMate(a)
+                        a.getMembers().extend(b.getMembers())
+                        hordes_to_remove.append(b)
+
+                if not self.orc_hordes[i].isMating() :
+                    self.moveEntity(self.orc_hordes[i], self.day)
+
 
         # check fighting
 
@@ -314,9 +341,25 @@ class World:
                 d = getDistance( a.getX(), a.getY(), b.getX() , b.getY())
                 if d <= minDistance:
                     self.hordes_fight(a,b)
+
+                if( b.isAlive() ):
+                    for j in self.trolls:
+                        d = getDistance( n.getX(), n.getY(), j.getX() , j.getY())
+                        if( d <= minDistance ):
+                            for m in n.getMembers():
+                                m.setDamage( j.getHit() )
+                                print("***************************** AAAAHRRRRRRRRRR TROLL")
+                            break;
                 if( not b.isAlive() ):
                     dead_orc_hordes.append(b)
-
+            # check trolls
+            for j in self.trolls:
+                d = getDistance( a.getX(), a.getY(), j.getX() , j.getY())
+                if( d <= minDistance ):
+                    for m in a.getMembers():
+                        m.setDamage( j.getHit() )
+                        print("***************************** AAAAHRRRRRRRRRR TROLL")
+                    break;
 
             if( not a.isAlive() ):
                 dead_elf_hordes.append(a)
@@ -441,7 +484,7 @@ class World:
         Items\n{self.items}\n\
         Trolls\n{self.trolls}'
 
-w = World(1,1,1)
+w = World(5,5,1)
 
 
 
