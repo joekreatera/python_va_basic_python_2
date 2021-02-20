@@ -253,7 +253,7 @@ class World:
 
         a = m1 if (len(m1) > len(m2) ) else m2
         b = m2 if (len(m1) > len(m1) ) else m1
-        
+
         i = 0
         j = 0
         for i in range (0, len(a) ):
@@ -303,8 +303,8 @@ class World:
         # check fighting
 
         # check dead ones
-        #dead_elf_hordes = []
-        #dead_orc_hordes = []
+        dead_elf_hordes = []
+        dead_orc_hordes = []
 
         for i in range(0, len(self.elf_hordes)):
             a = self.elf_hordes[i]
@@ -314,12 +314,12 @@ class World:
                 d = getDistance( a.getX(), a.getY(), b.getX() , b.getY())
                 if d <= minDistance:
                     self.hordes_fight(a,b)
-                if( not j.isAlive() ):
-                    dead_orc_hordes.append(j)
+                if( not b.isAlive() ):
+                    dead_orc_hordes.append(b)
 
 
-            if( not i.isAlive() ):
-                dead_elf_hordes.append(i)
+            if( not a.isAlive() ):
+                dead_elf_hordes.append(a)
 
             if( not a.isFighting() and not a.isMating() and a.isAlive()  ):
                 for j in range(0, len(self.creatures)):
@@ -334,6 +334,13 @@ class World:
                             if not b.isFighting() and not b.isMating() and b.isAlive():
                                 print("DEAD BY ELF HORDE")
                                 b.setDamage(1000000) # die because many guys got to you
+
+        for i in dead_elf_hordes:
+            self.elf_hordes.remove(i)
+        for i in dead_orc_hordes:
+            self.orc_hordes.remove(i)
+
+
 
         for i in range(0, len(self.orc_hordes)):
             a = self.orc_hordes[i]
@@ -350,6 +357,25 @@ class World:
                             if not b.isFighting() and not b.isMating() and b.isAlive():
                                 print("DEAD BY ORC HORDE")
                                 b.setDamage(1000000) # die because many guys got to you
+
+        i = 0
+        while i < len(self.elf_hordes) :
+            a = self.elf_hordes[i]
+            if( len(a.getMembers() ) == 1 ):
+                self.creatures.append( a.getMembers()[0] )
+                self.elf_hordes.remove(a)
+            else:
+                i = i+1
+
+        i = 0
+        while i < len(self.orc_hordes) :
+            a = self.orc_hordes[i]
+            if( len(a.getMembers() ) == 1 ):
+                self.creatures.append( a.getMembers()[0] )
+                self.orc_hordes.remove(a)
+            else:
+                i = i+1
+
 
         for i in range(0,len(self.creatures)):
             isFighting = False
