@@ -350,7 +350,7 @@ class World:
                                 print("***************************** AAAAHRRRRRRRRRR TROLL")
                             break;
                 if( not b.isAlive() ):
-                    dead_orc_hordes.append(b)
+                    dead_orc_hordes.append(b) if b not in dead_orc_hordes else dead_orc_hordes
             # check trolls
             for j in self.trolls:
                 d = getDistance( a.getX(), a.getY(), j.getX() , j.getY())
