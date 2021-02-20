@@ -202,10 +202,9 @@ class World:
         for i in range(0,orcs):
             self.creatures.append( Orc() )
 
-        """
         for i in range(0,trolls):
-            self.creatures.append( Troll() )
-        """
+            self.trolls.append( Troll() )
+
 
     def moveEntity(self , entity , days):
 
@@ -344,7 +343,7 @@ class World:
 
                 if( b.isAlive() ):
                     for j in self.trolls:
-                        d = getDistance( n.getX(), n.getY(), j.getX() , j.getY())
+                        d = getDistance( b.getX(), b.getY(), j.getX() , j.getY())
                         if( d <= minDistance ):
                             for m in n.getMembers():
                                 m.setDamage( j.getHit() )
@@ -484,7 +483,7 @@ class World:
         Items\n{self.items}\n\
         Trolls\n{self.trolls}'
 
-w = World(5,5,1)
+w = World(5,5,10)
 
 
 
