@@ -345,7 +345,7 @@ class World:
                     for j in self.trolls:
                         d = getDistance( b.getX(), b.getY(), j.getX() , j.getY())
                         if( d <= minDistance ):
-                            for m in n.getMembers():
+                            for m in b.getMembers():
                                 m.setDamage( j.getHit() )
                                 print("***************************** AAAAHRRRRRRRRRR TROLL")
                             break;
