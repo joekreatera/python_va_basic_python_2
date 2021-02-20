@@ -32,6 +32,8 @@ class Horde:
 
     def addMember(self, creature):
         self.members.append(creature)
+    def getMembers(self):
+        return self.members
     def setMate(self, m):
         self.mate = m
     def isFighting(self):
@@ -74,10 +76,16 @@ class Horde:
         return self.speed_x
     def getSpeedY(self):
         return self.speed_y
+    def cleanMembers(self):
+        alive = []
+        for i in self.members:
+            if i.isAlive():
+                alive.append(i)
+        self.members = alive
     def __str__(self):
         res = "" + f'x:{self.x} y:{self.y} sx:{self.speed_x} sy:{self.speed_y} \n'
         for i in self.members:
-            res = res + f'\n{i}'
+            res = res + f'\n{i}{i.life}'
         return res
 
 
@@ -191,7 +199,7 @@ class World:
         for i in range(0,elfs+1):
             self.creatures.append( Elf() )
 
-        for i in range(0,orcs):
+        for i in range(0,orcs+1):
             self.creatures.append( Orc() )
 
         """
@@ -241,6 +249,39 @@ class World:
             return h
         return None
 
+    def horde_fight(self, m1,m2):
+
+        a = m1 if (len(m1) > len(m2) ) else m2
+        b = m2 if (len(m1) > len(m1) ) else m1
+        
+        i = 0
+        j = 0
+        for i in range (0, len(a) ):
+            c1 = a[i]
+            c2 = b[i%len(b)]
+            c1.setDamage(c2.getHit())
+            c2.setDamage(c1.getHit())
+
+        print( f'{a}{b}')
+
+    def hordes_fight(self, h1, h2):
+        a = h1
+        b = h2
+        if (not a.isFighting() and not a.isMating() and a.isAlive()) and  (not b.isFighting() and not b.isMating() and b.isAlive()):
+            h1.setOpponent(h2)
+            h2.setOpponent(h1)
+
+        if h1.getOpponent() is h2:
+            print( "fighting!!!!")
+            self.horde_fight( h1.getMembers() , h2.getMembers()  )
+            h1.cleanMembers()
+            h2.cleanMembers()
+            if( not (h1.isAlive()  and h2.isAlive() ) ):
+                print("******************** dead!")
+                h1.setOpponent(None)
+                h2.setOpponent(None)
+
+
     def update(self):
         minDistance = 50
         self.day = self.day + 1
@@ -261,13 +302,26 @@ class World:
 
         # check fighting
 
+        # check dead ones
+        #dead_elf_hordes = []
+        #dead_orc_hordes = []
+
         for i in range(0, len(self.elf_hordes)):
             a = self.elf_hordes[i]
 
+            for j in range(0, len(self.orc_hordes)):
+                b = self.orc_hordes[j]
+                d = getDistance( a.getX(), a.getY(), b.getX() , b.getY())
+                if d <= minDistance:
+                    self.hordes_fight(a,b)
+                if( not j.isAlive() ):
+                    dead_orc_hordes.append(j)
+
+
+            if( not i.isAlive() ):
+                dead_elf_hordes.append(i)
+
             if( not a.isFighting() and not a.isMating() and a.isAlive()  ):
-                for j in range(0, len(self.orc_hordes)):
-                    print("do")
-                # missing check on A, not fighting , mating,
                 for j in range(0, len(self.creatures)):
                     b = self.creatures[j]
                     d = getDistance( a.getX(), a.getY(), b.getX() , b.getY())
@@ -281,7 +335,21 @@ class World:
                                 print("DEAD BY ELF HORDE")
                                 b.setDamage(1000000) # die because many guys got to you
 
-
+        for i in range(0, len(self.orc_hordes)):
+            a = self.orc_hordes[i]
+            if( not a.isFighting() and not a.isMating() and a.isAlive()  ):
+                for j in range(0, len(self.creatures)):
+                    b = self.creatures[j]
+                    d = getDistance( a.getX(), a.getY(), b.getX() , b.getY())
+                    if d <= minDistance:
+                        if type(b) is Orc:
+                            if not b.isFighting() and not b.isMating() and b.isAlive():
+                                a.addMember(b)
+                                b.setMate(a)
+                        if type(b) is Elf:
+                            if not b.isFighting() and not b.isMating() and b.isAlive():
+                                print("DEAD BY ORC HORDE")
+                                b.setDamage(1000000) # die because many guys got to you
 
         for i in range(0,len(self.creatures)):
             isFighting = False
@@ -351,7 +419,7 @@ w = World(1,1,1)
 
 
 
-for i in range(0,16):
+for i in range(0,50):
     w.update()
     #w.debug()
     print(f'{w}')
