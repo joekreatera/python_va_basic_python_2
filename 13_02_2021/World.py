@@ -42,9 +42,23 @@ class Horde:
         self.opponent =  opp
     def getOpponent(self):
         return self.opponent
+    def isAlive(self):
+        for i in self.members:
+            if i.isAlive:
+                return True
+        return False
     def move(self):
-        self.x = self.x + self.speed_x
-        self.y = self.y + self.speed_y
+        cx = 0
+        cy = 0
+
+        for i in self.members:
+            i.move( [self.speed_x, self.speed_y] )
+            cx = cx + i.getX()
+            cy = cy + i.getY()
+
+        self.x = int(cx/len(self.members))
+        self.y = int(cy/len(self.members))
+
     def invertSpeedX(self):
         self.speed_x = self.speed_x * -1
     def invertSpeedY(self):
@@ -109,9 +123,17 @@ class Creature:
         self.life = self.life - damage
     def isAlive(self):
         return self.life > 0
-    def move(self):
-        self.x = self.x + self.speed_x
-        self.y = self.y + self.speed_y
+    def move(self, us =  None ):
+
+        if(us is None):
+            self.x = self.x + self.speed_x
+            self.y = self.y + self.speed_y
+        else:
+            self.speed_x = us[0]
+            self.speed_y = us[1]
+            self.x = self.x + self.speed_x
+            self.y = self.y + self.speed_y
+
     def invertSpeedX(self):
         self.speed_x = self.speed_x * -1
     def invertSpeedY(self):
@@ -165,11 +187,14 @@ class World:
         self.day = 0
         self.trolls = []
 
+
         for i in range(0,elfs+1):
             self.creatures.append( Elf() )
-        """for i in range(0,orcs):
+
+        for i in range(0,orcs):
             self.creatures.append( Orc() )
 
+        """
         for i in range(0,trolls):
             self.creatures.append( Troll() )
         """
@@ -217,6 +242,7 @@ class World:
         return None
 
     def update(self):
+        minDistance = 50
         self.day = self.day + 1
 
         # update move and horde merging
@@ -234,9 +260,28 @@ class World:
                 self.moveEntity(self.orc_hordes[i], self.day)
 
         # check fighting
+
         for i in range(0, len(self.elf_hordes)):
-            for j in range(0, len(self.orc_hordes)):
-                print("do")
+            a = self.elf_hordes[i]
+
+            if( not a.isFighting() and not a.isMating() and a.isAlive()  ):
+                for j in range(0, len(self.orc_hordes)):
+                    print("do")
+                # missing check on A, not fighting , mating,
+                for j in range(0, len(self.creatures)):
+                    b = self.creatures[j]
+                    d = getDistance( a.getX(), a.getY(), b.getX() , b.getY())
+                    if d <= minDistance:
+                        if type(b) is Elf:
+                            if not b.isFighting() and not b.isMating() and b.isAlive():
+                                a.addMember(b)
+                                b.setMate(a)
+                        if type(b) is Orc:
+                            if not b.isFighting() and not b.isMating() and b.isAlive():
+                                print("DEAD BY ELF HORDE")
+                                b.setDamage(1000000) # die because many guys got to you
+
+
 
         for i in range(0,len(self.creatures)):
             isFighting = False
@@ -244,7 +289,7 @@ class World:
             for j in range(i+1, len(self.creatures) ) :
                 b =self.creatures[j]
                 d = getDistance( a.getX(), a.getY(), b.getX() , b.getY())
-                if d <= 50:
+                if d <= minDistance:
                     if type(a) == type(b):
                         h = self.horde(a,b)
                         if h is not None:
