@@ -79,6 +79,14 @@ class Horde:
         return self.speed_x
     def getSpeedY(self):
         return self.speed_y
+
+    def takeItems(self, items):
+        for i in self.members:
+            for j in items:
+                dist = getDistance(i.getX(), i.getY(), j.getX(), j.getY())
+                if dist < 5 :
+                    j.apply(i)
+
     def cleanMembers(self):
         alive = []
         for i in self.members:
@@ -132,6 +140,11 @@ class Creature:
         return self.strength*self.strength_mult + self.magic*self.magic_mult
     def setDamage(self, damage):
         self.life = self.life - damage
+    def takeItems(self, items):
+        for j in items:
+            dist = getDistance(self.getX(), self.getY(), j.getX(), j.getY())
+            if dist < 5 :
+                j.apply(i)
     def isAlive(self):
         return self.life > 0
     def move(self, us =  None ):
@@ -315,6 +328,7 @@ class World :
         hordes_to_remove = []
         for i in range(0, len(self.elf_hordes)):
             a = self.elf_hordes[i]
+            a.takeItems(self.items)
             if( not a.isMating() and not a.isFighting() and a.isAlive()  ):
                 for j in range(i+1, len(self.elf_hordes)):
                     b = self.elf_hordes[j]
@@ -338,6 +352,7 @@ class World :
         # update move and horde merging
         for i in range(0, len(self.orc_hordes)):
             a = self.orc_hordes[i]
+            a.takeItems(self.items)
             if( not a.isMating() and not a.isFighting() and a.isAlive()  ):
                 for j in range(i+1, len(self.orc_hordes)):
                     b = self.orc_hordes[j]
@@ -448,6 +463,7 @@ class World :
         for i in range(0,len(self.creatures)):
             isFighting = False
             a = self.creatures[i]
+            a.takeItems(self.items)
             for j in range(i+1, len(self.creatures) ) :
                 b =self.creatures[j]
                 d = getDistance( a.getX(), a.getY(), b.getX() , b.getY())
@@ -479,6 +495,12 @@ class World :
             c = c+1
             if( c == len(self.creatures)):
                 keep = False
+
+        """
+        Agregar un metodo que regrese el valor de "taken"
+        Eliminar item de lista de items cuando este "taken"
+        Aplicar los nuevos specs a la creatura
+        """
         self.creatures = alive
 
     def debug(self):
