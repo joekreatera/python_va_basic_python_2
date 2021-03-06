@@ -116,6 +116,12 @@ class Creature:
         self.y = int(getRandomBetween(0,MAX_GRID_UNITS_Y))
         self.opponent = None
         self.mate = None
+    def addMagic(self, m):
+        self.magic = self.magic + m
+    def addStrength(self, s):
+        self.strength = self.strength + s
+    def recover(self, pct):
+        self.life = min(self.start_life ,  self.life + int(self.start_life*pct))
     def setOpponent(self,opp):
         self.opponent = opp
     def getOpponent(self):
@@ -139,12 +145,12 @@ class Creature:
     def getHit(self):
         return self.strength*self.strength_mult + self.magic*self.magic_mult
     def setDamage(self, damage):
-        self.life = self.life - damage
+        self.life = max(0,self.life - damage )
     def takeItems(self, items):
         for j in items:
             dist = getDistance(self.getX(), self.getY(), j.getX(), j.getY())
             if dist < 5 :
-                j.apply(i)
+                j.apply(self)
     def isAlive(self):
         return self.life > 0
     def move(self, us =  None ):
@@ -215,15 +221,24 @@ class Item:
     def getY(self):
         return self.y
 
+    def isTaken(self):
+        return self.taken
+
     def apply(self, creature):
         if( self.taken ):
             return
-
         self.taken = True
+
+        if type(creature) is Elf and self.type == AMULET_ITEM :
+            creature.addMagic(40)
+        if type(creature) is Orc and self.type == WEAPON_ITEM :
+            creature.addStrength(30)
+        if type(creature) is Elf and self.type == WEAPON_ITEM :
+            creature.addStrength(10)
+        if(self.type == HEALING_ITEM):
+            creature.recover(0.5)
+
         print(f"\n ****** ITEM Applying item {self.type} to {creature} \n")
-        """
-        apply rules
-        """
 
 class World :
     def __init__(self, elfs = 0, orcs = 0, trolls = 0):
@@ -244,6 +259,12 @@ class World :
         for i in range(0,trolls):
             self.trolls.append( Troll() )
 
+        self.items.append( Item(AMULET_ITEM, getRandomBetween(0, 100), getRandomBetween(0, 100) ) )
+        self.items.append( Item(AMULET_ITEM, getRandomBetween(0, 100), getRandomBetween(0, 100) ) )
+        self.items.append( Item(WEAPON_ITEM, getRandomBetween(0, 100), getRandomBetween(0, 100) ) )
+        self.items.append( Item(WEAPON_ITEM, getRandomBetween(0, 100), getRandomBetween(0, 100) ) )
+        self.items.append( Item(HEALING_ITEM, getRandomBetween(0, 100), getRandomBetween(0, 100) ) )
+        self.items.append( Item(HEALING_ITEM, getRandomBetween(0, 100), getRandomBetween(0, 100) ) )
 
     def moveEntity(self , entity , days):
 
@@ -497,10 +518,16 @@ class World :
                 keep = False
 
         """
-        Agregar un metodo que regrese el valor de "taken"
-        Eliminar item de lista de items cuando este "taken"
+        [x]Agregar un metodo que regrese el valor de "taken"
+        [x]Eliminar item de lista de items cuando este "taken"
         Aplicar los nuevos specs a la creatura
         """
+        i = 0
+        while i < len(self.items):
+            if(self.items[i].isTaken() ):
+                self.items.remove(self.items[i])
+            else:
+                i = i + 1
         self.creatures = alive
 
     def debug(self):
