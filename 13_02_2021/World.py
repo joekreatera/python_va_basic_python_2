@@ -12,6 +12,9 @@ ELF_START_MIN_LIFE = 1500
 MAX_GRID_UNITS_X = 100
 MAX_GRID_UNITS_Y = 100
 
+AMULET_ITEM = 0
+WEAPON_ITEM = 1
+HEALING_ITEM = 2
 
 def getRandomBetween(min,max):
     return random()*(max-min)+min
@@ -186,7 +189,30 @@ class Troll(Creature):
         self.strength = getRandomBetween(1000,2000)
 
 
-class World:
+class Item:
+    def __init__(self, type, x, y):
+        self.type = type
+        self.x = x
+        self.y = y
+        self.taken = False
+
+    def getX(self):
+        return self.x
+
+    def getY(self):
+        return self.y
+
+    def apply(self, creature):
+        if( self.taken ):
+            return
+
+        self.taken = True
+        print(f"\n ****** ITEM Applying item {self.type} to {creature} \n")
+        """
+        apply rules
+        """
+
+class World :
     def __init__(self, elfs = 0, orcs = 0, trolls = 0):
         self.creatures = []
         self.items = []
