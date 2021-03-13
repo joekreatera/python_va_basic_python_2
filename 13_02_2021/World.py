@@ -560,6 +560,17 @@ class World :
 
 w = World(5,5,10)
 
+"""
+Tareas
+- Crear una raza humana que no anda en hordas, solo anda por ahi
+- La raza humana puede encontrarse amuletos y armas y utilizarlas para DUPLICAR sus stats
+- Los humanos tienen todos un mismo comienzo de fuerza y magia del 50% del elfo mas debil
+- Existen 1 dragon en el escenario, si alguien lo encuentra, y lo domina (aleatoriamente) se quedará
+con el hacia donde vaya y hará un daño al otro de 1000. Si una horda se encuentra con un dragon, mataran al dragon
+Si una creatura se encuentra con un dragon, si aleatoriamente (>0.5) la creatura gana, lo domina, de cualquier otra
+manera, la creatura muere.
+
+"""
 
 
 for i in range(0,50):
