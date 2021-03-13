@@ -3,10 +3,10 @@ from direct.task import Task
 
 from panda3d.core import OrthographicLens
 from panda3d.core import Point3
-from panda3d.core import Vec4
+from panda3d.core import Vec4, Vec3
 
 from panda3d.core import CollisionHandlerEvent, CollisionTraverser, CollisionNode
-from panda3d.core import CollisionRay
+from panda3d.core import CollisionSegment
 from panda3d.core import CollisionBox
 
 from panda3d.core import loadPrcFileData
@@ -31,9 +31,14 @@ class DonkeyKong(ShowBase):
         self.scene.setTransparency(1)
         
         self.blockTexture = self.loader.loadTexture('models/block.png')
+        self.stairsTexture = self.loader.loadTexture('models/stairs.png')
         self.taskMgr.add(self.setup , "setup")
         self.taskMgr.add(self.update , "update")
-        
+        self.jumpAvailable = False
+        self.baseTime = 0;
+        self.v0 = 0
+        self.gravity = -.5
+        self.stairsAvailable = False
         
     def pressUp(self):
         print("up")
@@ -59,7 +64,6 @@ class DonkeyKong(ShowBase):
         
         self.player = self.scene.attachNewNode("Player")
         self.scene.find('root/mario').reparentTo(self.player)
-        self.player.setPos(7,0,-4.5)
         
         #input setup
         self.accept("raw-arrow_up", self.pressUp)
@@ -87,35 +91,101 @@ class DonkeyKong(ShowBase):
         self.collisionHandlerEvent.addInPattern('into-%in')
         self.collisionHandlerEvent.addOutPattern('outof-%in') 
         
-        self.floor1 = self.scene.attachNewNode('Floor1')
-        hitbox = CollisionBox( Point3(0,0,0) , 9.3, 5, .5 )
-        cNodePath = self.floor1.attachNewNode( CollisionNode('floor1Hitbox') )
+        ray = CollisionSegment(0,0,0,0,0,-.6)
+        cNodePath = self.player.attachNewNode( CollisionNode('marioRay') )
+        cNodePath.node().addSolid(ray)
+        cNodePath.node().setIntoCollideMask(0x01)
+        cNodePath.node().setFromCollideMask(0x01)
+        cNodePath.show()
+        base.cTrav.addCollider(cNodePath, self.collisionHandlerEvent)
+        self.player.setPos(7,0,5)
+        
+        self.floor1 = self.createSquareCollider(-1.8,-5.5, 9.3,.5,'floor0','floor1Hitbox', 'Floor1', self.enableJump, self.disableJump, self.blockTexture)
+        self.floor2 = self.createSquareCollider(2.08 ,-2.5, 8.0 ,.5,'floor1','floor2Hitbox', 'Floor2', self.enableJump, self.disableJump, self.blockTexture)
+        self.floor3_1 = self.createSquareCollider(3.6 , 0.5 ,3.8,.5,'floor2','floor3_1Hitbox', 'Floor3_1', self.enableJump, self.disableJump, self.blockTexture)
+        self.floor3_2 = self.createSquareCollider(-6.3 ,0.5 ,5  ,.5,'pCube4','floor3_2Hitbox', 'Floor3_2', self.enableJump, self.disableJump, self.blockTexture)
+        self.floor4 = self.createSquareCollider(1.8,3.5,8,.5,'floors','floor4Hitbox', 'Floor4', self.enableJump, self.disableJump, self.blockTexture)
+        
+        #self.topstair = self.createSquareCollider(-6.8 , 3.2,0.5,2.5,'topstair','topstairHitbox', 'TopStair' , self.enableStairs, self.disableStairs, self.stairsTexture)
+        #self.middlestair = self.createSquareCollider(-0.86, 0.1,0.5,2.5,'middlestair','middlestairHitbox', 'MiddleStair' , self.enableStairs, self.disableStairs, self.stairsTexture)
+        #self.bottomstair = self.createSquareCollider(-6.8 ,-2.5,0.5,2.5,'bottomstair','bottomstairHitbox', 'BottomStair' , self.enableStairs, self.disableStairs, self.stairsTexture)
+        
+        
+        
+        base.cTrav.showCollisions(self.render)
+        return Task.done
+    
+    def createSquareCollider(self,px,pz, w,h, modelName, collisionNodeName, nodeName, enableFunction, disableFunction, texture ):
+        obj = self.scene.attachNewNode(nodeName)
+        hitbox = CollisionBox( Point3(0,0,0) , w, 5, h)
+        cNodePath = obj.attachNewNode( CollisionNode(collisionNodeName) )
         cNodePath.node().addSolid(hitbox)
         cNodePath.node().setIntoCollideMask(0x01)
         cNodePath.node().setFromCollideMask(0x01)
-        #cNodePath.show()
+        cNodePath.show()
         base.cTrav.addCollider(cNodePath, self.collisionHandlerEvent)
         
-        self.scene.find('root/floor0').reparentTo(self.floor1)
-        self.floor1.setPos(-1.8,0,-5.5)
-        self.floor1.setTexture(self.blockTexture)
+        self.scene.find(f'root/{modelName}').reparentTo(obj)
+        obj.setPos(px,0,pz)
+        obj.setTexture(texture)
         
-        #base.cTrav.showCollisions(self.render)
-        return Task.done
+        self.accept(f'into-{collisionNodeName}' , enableFunction)
+        self.accept(f'outof-{collisionNodeName}' , disableFunction)
+        return obj
+    
+    def enableJump(self, evt):
+        self.jumpAvailable = True
+        print("enable jump")
+
+    def disableJump(self, evt):
+        self.jumpAvailable = False
+        print("disable jump")
+    
+    def enableStairs(self, evt):
+        self.stairsAvailable = True
+        print("enable stairs")
+
+    def disableStairs(self, evt):
+        self.stairsAvailable = False
+        print("disable stairs")
         
+        
+    def applyMove(self):
+        mv = Vec3(0,0,0)
+        
+        if(self.input["left"]):
+            mv.x = 0.1
+        if(self.input["right"]):
+            mv.x = -0.1
+        
+        
+        if( self.jumpAvailable ):
+            mv.z = self.v0 + self.baseTime*self.gravity
+            if( mv.z < 0):
+                self.v0 = 0
+                self.baseTime = 0
+                mv.z = 0
+                        
+        if( self.input["space"] and self.jumpAvailable):
+            self.baseTime = 0
+            self.v0 = .2
+            mv.z = self.v0 + self.baseTime*self.gravity
+        
+        if( not self.jumpAvailable):
+            self.baseTime = self.baseTime + globalClock.getDt()
+            mv.z = self.v0 + self.baseTime*self.gravity
+        
+        p = self.player.getPos()
+        p.x = p.x + mv.x
+        p.z = p.z + mv.z
+        self.player.setPos(p)
+
     def update(self, task):
         self.camera.setPos(0,35,0)
         self.camera.lookAt(self.scene)
         
-        if(self.input["left"]):
-            p = self.player.getPos()
-            p.x = p.x + 0.5
-            self.player.setPos(p)
-        if(self.input["right"]):
-            p = self.player.getPos()
-            p.x = p.x - 0.5
-            self.player.setPos(p)
-
+        self.applyMove()
+        
         return Task.cont
         
 dk = DonkeyKong()
