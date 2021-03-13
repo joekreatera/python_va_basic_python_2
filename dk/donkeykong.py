@@ -5,8 +5,7 @@ from panda3d.core import OrthographicLens
 from panda3d.core import Point3
 from panda3d.core import Vec4
 
-from panda3d.core import CollisionHandlerEvent
-from panda3d.core import CollisionTraverser
+from panda3d.core import CollisionHandlerEvent, CollisionTraverser, CollisionNode
 from panda3d.core import CollisionRay
 from panda3d.core import CollisionBox
 
@@ -31,6 +30,7 @@ class DonkeyKong(ShowBase):
         self.scene.setTexture(self.arcadeTexture)
         self.scene.setTransparency(1)
         
+        self.blockTexture = self.loader.loadTexture('models/block.png')
         self.taskMgr.add(self.setup , "setup")
         self.taskMgr.add(self.update , "update")
         
@@ -73,12 +73,6 @@ class DonkeyKong(ShowBase):
         self.accept("raw-arrow_left-up", self.pressLeft)
         self.accept("raw-arrow_right-up", self.pressRight)
         self.accept("raw-space-up" , self.pressSpace)
-        
-        # collision handling
-        base.cTrav  = CollisionTraverser()
-        self.collisionHandlerEvent = CollisionHandlerEvent()
-        self.collisionHandlerEvent.addInPattern('into-%in')
-        self.collisionHandlerEvent.addOutPattern('outof-%in') 
         self.input = {
         'left':False,
         'right':False,
@@ -86,6 +80,27 @@ class DonkeyKong(ShowBase):
         'down':False,
         'space':False
         }
+        
+        # collision handling
+        base.cTrav  = CollisionTraverser()
+        self.collisionHandlerEvent = CollisionHandlerEvent()
+        self.collisionHandlerEvent.addInPattern('into-%in')
+        self.collisionHandlerEvent.addOutPattern('outof-%in') 
+        
+        self.floor1 = self.scene.attachNewNode('Floor1')
+        hitbox = CollisionBox( Point3(0,0,0) , 9.3, 5, .5 )
+        cNodePath = self.floor1.attachNewNode( CollisionNode('floor1Hitbox') )
+        cNodePath.node().addSolid(hitbox)
+        cNodePath.node().setIntoCollideMask(0x01)
+        cNodePath.node().setFromCollideMask(0x01)
+        #cNodePath.show()
+        base.cTrav.addCollider(cNodePath, self.collisionHandlerEvent)
+        
+        self.scene.find('root/floor0').reparentTo(self.floor1)
+        self.floor1.setPos(-1.8,0,-5.5)
+        self.floor1.setTexture(self.blockTexture)
+        
+        #base.cTrav.showCollisions(self.render)
         return Task.done
         
     def update(self, task):
