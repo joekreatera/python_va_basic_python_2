@@ -43,6 +43,7 @@ class DonkeyKong(ShowBase):
         self.gravity = -.5
         self.stairsAvailable = False
         self.lastPlayerValidZ = 0
+        self.hammerTime = False
         
     def pressUp(self):
         print("up")
@@ -86,7 +87,8 @@ class DonkeyKong(ShowBase):
         self.hammerUp = self.scene.find('root/hammerup')
         self.hammerUp.reparentTo(self.marioGfx)
         self.hammerUp.setPos(0,0,1)
-        
+        self.hammerDown.hide()
+        self.hammerUp.hide()
         
         frame1 = Func(self.hammerFrame1)
         frame2 = Func(self.hammerFrame2)
@@ -163,7 +165,9 @@ class DonkeyKong(ShowBase):
         return Task.done
     
     def enableHammer(self, evt):
-        print("hammer time")
+        self.hammerTime = True
+        self.hammerSequence.loop()
+        self.scene.node().removeChild( evt.getIntoNodePath().node().getParent(0) )
         
     def disableHammer(self, evt):
         pass
@@ -181,6 +185,10 @@ class DonkeyKong(ShowBase):
             
         if other.name == "barrelDestroyer":
             self.scene.node().removeChild( physicsBarrel.getParent(0) )
+        
+        if other.name == "Player" :
+            if( self.hammerTime):
+                self.scene.node().removeChild( physicsBarrel.getParent(0) )
         
     def throwBarrel(self):
         barrelNode = self.scene.attachNewNode("PhysicalBarrel")
