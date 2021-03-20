@@ -11,9 +11,12 @@ from panda3d.core import CollisionBox
 
 from panda3d.core import loadPrcFileData
 
+from panda3d.physics import *
+from direct.interval.IntervalGlobal import *
+
 loadPrcFileData('', 'win-size 640 480')
-#loadPrcFileData('', 'want-directtools #t')
-#loadPrcFileData('', 'want-tk #t')
+loadPrcFileData('', 'want-directtools #t')
+loadPrcFileData('', 'want-tk #t')
 loadPrcFileData("", "textures-auto-power-2 #f")
 loadPrcFileData("", "textures-power-2 none")
 loadPrcFileData("", "textures-square none")
@@ -39,6 +42,7 @@ class DonkeyKong(ShowBase):
         self.v0 = 0
         self.gravity = -.5
         self.stairsAvailable = False
+        self.lastPlayerValidZ = 0
         
     def pressUp(self):
         print("up")
@@ -94,34 +98,34 @@ class DonkeyKong(ShowBase):
         ray = CollisionSegment(0,0,0,0,0,-.6)
         cNodePath = self.player.attachNewNode( CollisionNode('marioRay') )
         cNodePath.node().addSolid(ray)
-        cNodePath.node().setIntoCollideMask(0x01)
-        cNodePath.node().setFromCollideMask(0x01)
+        cNodePath.node().setIntoCollideMask(0x3)
+        cNodePath.node().setFromCollideMask(0x3)
         cNodePath.show()
         base.cTrav.addCollider(cNodePath, self.collisionHandlerEvent)
         self.player.setPos(7,0,5)
         
-        self.floor1 = self.createSquareCollider(-1.8,-5.5, 9.3,.5,'floor0','floor1Hitbox', 'Floor1', self.enableJump, self.disableJump, self.blockTexture)
-        self.floor2 = self.createSquareCollider(2.08 ,-2.5, 8.0 ,.5,'floor1','floor2Hitbox', 'Floor2', self.enableJump, self.disableJump, self.blockTexture)
-        self.floor3_1 = self.createSquareCollider(3.6 , 0.5 ,3.8,.5,'floor2','floor3_1Hitbox', 'Floor3_1', self.enableJump, self.disableJump, self.blockTexture)
-        self.floor3_2 = self.createSquareCollider(-6.3 ,0.5 ,5  ,.5,'pCube4','floor3_2Hitbox', 'Floor3_2', self.enableJump, self.disableJump, self.blockTexture)
-        self.floor4 = self.createSquareCollider(1.8,3.5,8,.5,'floors','floor4Hitbox', 'Floor4', self.enableJump, self.disableJump, self.blockTexture)
+        self.floor1 = self.createSquareCollider(-1.8,-5.5, 9.3,.5,'floor0','floor1Hitbox', 'Floor1', self.enableJump, self.disableJump, self.blockTexture, 0x01)
+        self.floor2 = self.createSquareCollider(2.08 ,-2.5, 8.0 ,.5,'floor1','floor2Hitbox', 'Floor2', self.enableJump, self.disableJump, self.blockTexture, 0x01)
+        self.floor3_1 = self.createSquareCollider(3.6 , 0.5 ,3.8,.5,'floor2','floor3_1Hitbox', 'Floor3_1', self.enableJump, self.disableJump, self.blockTexture, 0x01)
+        self.floor3_2 = self.createSquareCollider(-6.3 ,0.5 ,5  ,.5,'pCube4','floor3_2Hitbox', 'Floor3_2', self.enableJump, self.disableJump, self.blockTexture, 0x01)
+        self.floor4 = self.createSquareCollider(1.8,3.5,8,.5,'floors','floor4Hitbox', 'Floor4', self.enableJump, self.disableJump, self.blockTexture, 0x01)
         
-        #self.topstair = self.createSquareCollider(-6.8 , 3.2,0.5,2.5,'topstair','topstairHitbox', 'TopStair' , self.enableStairs, self.disableStairs, self.stairsTexture)
-        #self.middlestair = self.createSquareCollider(-0.86, 0.1,0.5,2.5,'middlestair','middlestairHitbox', 'MiddleStair' , self.enableStairs, self.disableStairs, self.stairsTexture)
-        #self.bottomstair = self.createSquareCollider(-6.8 ,-2.5,0.5,2.5,'bottomstair','bottomstairHitbox', 'BottomStair' , self.enableStairs, self.disableStairs, self.stairsTexture)
+        self.topstair = self.createSquareCollider(-6.8 ,3.5,0.5,2.5,'topstair','topstairHitbox', 'TopStair' , self.enableStairs, self.disableStairs, self.stairsTexture, 0x02)
+        self.middlestair = self.createSquareCollider(-0.86, 0.1,0.5,2.5,'middlestair','middlestairHitbox', 'MiddleStair' , self.enableStairs, self.disableStairs, self.stairsTexture, 0x02)
+        self.bottomstair = self.createSquareCollider(-6.8 ,-2.5,0.5,2.5,'bottomstair','bottomstairHitbox', 'BottomStair' , self.enableStairs, self.disableStairs, self.stairsTexture, 0x02)
         
         
         
         base.cTrav.showCollisions(self.render)
         return Task.done
     
-    def createSquareCollider(self,px,pz, w,h, modelName, collisionNodeName, nodeName, enableFunction, disableFunction, texture ):
+    def createSquareCollider(self,px,pz, w,h, modelName, collisionNodeName, nodeName, enableFunction, disableFunction, texture, mask ):
         obj = self.scene.attachNewNode(nodeName)
         hitbox = CollisionBox( Point3(0,0,0) , w, 5, h)
         cNodePath = obj.attachNewNode( CollisionNode(collisionNodeName) )
         cNodePath.node().addSolid(hitbox)
-        cNodePath.node().setIntoCollideMask(0x01)
-        cNodePath.node().setFromCollideMask(0x01)
+        cNodePath.node().setIntoCollideMask(mask)
+        cNodePath.node().setFromCollideMask(mask)
         cNodePath.show()
         base.cTrav.addCollider(cNodePath, self.collisionHandlerEvent)
         
@@ -134,10 +138,13 @@ class DonkeyKong(ShowBase):
         return obj
     
     def enableJump(self, evt):
+        print( evt.getIntoNodePath().node().getParent(0).getTransform().getPos() )
+        self.lastPlayerValidZ = evt.getIntoNodePath().node().getParent(0).getTransform().getPos().z +1
         self.jumpAvailable = True
         print("enable jump")
 
     def disableJump(self, evt):
+        print( evt.getIntoNodePath().node().getParent(0) )
         self.jumpAvailable = False
         print("disable jump")
     
@@ -152,15 +159,17 @@ class DonkeyKong(ShowBase):
         
     def applyMove(self):
         mv = Vec3(0,0,0)
+        p = self.player.getPos()
         
         if(self.input["left"]):
             mv.x = 0.1
         if(self.input["right"]):
             mv.x = -0.1
         
-        
         if( self.jumpAvailable ):
             mv.z = self.v0 + self.baseTime*self.gravity
+            if( not self.stairsAvailable ):
+                p.z = self.lastPlayerValidZ
             if( mv.z < 0):
                 self.v0 = 0
                 self.baseTime = 0
@@ -171,11 +180,17 @@ class DonkeyKong(ShowBase):
             self.v0 = .2
             mv.z = self.v0 + self.baseTime*self.gravity
         
-        if( not self.jumpAvailable):
+        if( not self.jumpAvailable and not self.stairsAvailable ):
             self.baseTime = self.baseTime + globalClock.getDt()
             mv.z = self.v0 + self.baseTime*self.gravity
         
-        p = self.player.getPos()
+        if( self.stairsAvailable):
+            self.baseTime = 0
+            self.v0 = 0
+            if( self.input["up"]):
+                mv.z = mv.z + 0.1
+            if( self.input["down"] and not self.jumpAvailable) :
+                mv.z = mv.z - 0.1
         p.x = p.x + mv.x
         p.z = p.z + mv.z
         self.player.setPos(p)
