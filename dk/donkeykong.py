@@ -7,7 +7,7 @@ from panda3d.core import Vec4, Vec3
 
 from panda3d.core import CollisionHandlerEvent, CollisionTraverser, CollisionNode
 from panda3d.core import CollisionSegment
-from panda3d.core import CollisionBox
+from panda3d.core import CollisionBox, CollisionSphere
 
 from panda3d.core import loadPrcFileData
 
@@ -115,9 +115,52 @@ class DonkeyKong(ShowBase):
         self.bottomstair = self.createSquareCollider(-6.8 ,-2.5,0.5,2.5,'bottomstair','bottomstairHitbox', 'BottomStair' , self.enableStairs, self.disableStairs, self.stairsTexture, 0x02)
         
         
+        base.enableParticles()
+        self.physicsCollisionPusher = PhysicsCollisionHandler()
+        gravity = ForceNode("world-forces")
+        gravityP = render.attachNewNode(gravity)
+        gravityForce = LinearVectorForce(0,0,-9.81)
+        gravity.addForce(gravityForce)
+        base.physicsMgr.addLinearForce(gravityForce)
+        self.accept("into-barrelCollider", self.barrelCrash)
+        
+        self.accept("raw-a", self.throwBarrel)
         
         base.cTrav.showCollisions(self.render)
         return Task.done
+        
+    def barrelCrash(self, evt):
+        pass    
+    def throwBarrel(self):
+        barrelNode = self.scene.attachNewNode("PhysicalBarrel")
+        physicsBarrel = ActorNode("physics_barrel")
+        physicsBarrel.getPhysicsObject().setMass(0.01)
+        
+        barrel = barrelNode.attachNewNode(physicsBarrel)
+        base.physicsMgr.attachPhysicalNode(physicsBarrel)
+        
+        visualBarrel = barrel.attachNewNode("BarrelCopy")
+        originalBarrel = self.scene.find("root/barrel")
+        originalBarrel.instanceTo(visualBarrel)
+        
+        sphere = CollisionSphere(0,0,0,0.5)
+        cNodePath = visualBarrel.attachNewNode( CollisionNode("barrelCollider") )
+        cNodePath.node().addSolid(sphere)
+        cNodePath.node().setFromCollideMask(0x01)
+        cNodePath.node().setIntoCollideMask(0x01)
+        cNodePath.show()
+        
+        self.physicsCollisionPusher.addCollider(cNodePath, barrel)
+        base.cTrav.addCollider(cNodePath, self.physicsCollisionPusher )
+        
+        barrelForceNode = ForceNode("barrelForce")
+        barrel.attachNewNode(barrelForceNode)
+        barrelForce = LinearVectorForce(-1,0,0,1,False)
+        barrelForceNode.addForce(barrelForce)
+        physicsBarrel.getPhysical(0).addLinearForce(barrelForce)
+        
+        
+        barrelNode.setPos(self.scene, -3, 0, 7)
     
     def createSquareCollider(self,px,pz, w,h, modelName, collisionNodeName, nodeName, enableFunction, disableFunction, texture, mask ):
         obj = self.scene.attachNewNode(nodeName)
