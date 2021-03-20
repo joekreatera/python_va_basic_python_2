@@ -15,8 +15,8 @@ from panda3d.physics import *
 from direct.interval.IntervalGlobal import *
 
 loadPrcFileData('', 'win-size 640 480')
-loadPrcFileData('', 'want-directtools #t')
-loadPrcFileData('', 'want-tk #t')
+#loadPrcFileData('', 'want-directtools #t')
+#loadPrcFileData('', 'want-tk #t')
 loadPrcFileData("", "textures-auto-power-2 #f")
 loadPrcFileData("", "textures-power-2 none")
 loadPrcFileData("", "textures-square none")
@@ -59,7 +59,14 @@ class DonkeyKong(ShowBase):
     def pressSpace(self):
         print("space")
         self.input["space"] = not self.input["space"]
+    
+    def hammerFrame1(self):
+        self.hammerDown.show()
+        self.hammerUp.hide()
         
+    def hammerFrame2(self):
+        self.hammerDown.hide()
+        self.hammerUp.show()
     
     def setup(self, task):
         lens = OrthographicLens()
@@ -67,8 +74,28 @@ class DonkeyKong(ShowBase):
         base.camNode.setLens(lens)
         
         self.player = self.scene.attachNewNode("Player")
-        self.scene.find('root/mario').reparentTo(self.player)
+
+
+        # init mario gfx stuff
+        self.marioGfx = self.scene.find('root/mario')
+        self.marioGfx.reparentTo(self.player)
+        self.marioGfx.setTwoSided(True)
+        self.hammerDown = self.scene.find('root/hammerdowm')
+        self.hammerDown.reparentTo(self.marioGfx)
+        self.hammerDown.setPos(1,0,0)
+        self.hammerUp = self.scene.find('root/hammerup')
+        self.hammerUp.reparentTo(self.marioGfx)
+        self.hammerUp.setPos(0,0,1)
         
+        
+        frame1 = Func(self.hammerFrame1)
+        frame2 = Func(self.hammerFrame2)
+        delay = Wait(0.1)
+        self.hammerSequence = Sequence(frame1,delay, frame2, delay)
+        #sequence.loop()
+        #sequence.start()
+        #sequence.finish()
+
         #input setup
         self.accept("raw-arrow_up", self.pressUp)
         self.accept("raw-arrow_down", self.pressDown)
@@ -110,10 +137,16 @@ class DonkeyKong(ShowBase):
         self.floor3_2 = self.createSquareCollider(-6.3 ,0.5 ,5  ,.5,'pCube4','floor3_2Hitbox', 'Floor3_2', self.enableJump, self.disableJump, self.blockTexture, 0x01)
         self.floor4 = self.createSquareCollider(1.8,3.5,8,.5,'floors','floor4Hitbox', 'Floor4', self.enableJump, self.disableJump, self.blockTexture, 0x01)
         
+        self.hammer = self.createSquareCollider(6,1.5,.5,.5,'hammer','hammerHitbox', 'hammer', self.enableHammer, self.disableHammer, self.arcadeTexture, 0x02)
+        
         self.topstair = self.createSquareCollider(-6.8 ,3.5,0.5,2.5,'topstair','topstairHitbox', 'TopStair' , self.enableStairs, self.disableStairs, self.stairsTexture, 0x02)
         self.middlestair = self.createSquareCollider(-0.86, 0.1,0.5,2.5,'middlestair','middlestairHitbox', 'MiddleStair' , self.enableStairs, self.disableStairs, self.stairsTexture, 0x02)
         self.bottomstair = self.createSquareCollider(-6.8 ,-2.5,0.5,2.5,'bottomstair','bottomstairHitbox', 'BottomStair' , self.enableStairs, self.disableStairs, self.stairsTexture, 0x02)
         
+        self.leftWall = self.invisibleSquareCollider( -12.5, 0, 1, 10, "leftWallHitbox", "leftWall", 0x1 )
+        self.rightWall = self.invisibleSquareCollider( 11.3, 0, 1, 20, "rightWallHitbox", "rightWall", 0x1 )
+        
+        self.barrelDestroyer = self.invisibleSquareCollider( -0.5, -10, 10.5, 1, "barrelDestroyHitBox", "barrelDestroyer", 0x1 )
         
         base.enableParticles()
         self.physicsCollisionPusher = PhysicsCollisionHandler()
@@ -128,9 +161,27 @@ class DonkeyKong(ShowBase):
         
         base.cTrav.showCollisions(self.render)
         return Task.done
+    
+    def enableHammer(self, evt):
+        print("hammer time")
+        
+    def disableHammer(self, evt):
+        pass
         
     def barrelCrash(self, evt):
-        pass    
+        physicsBarrel = evt.getIntoNodePath().node().getParent(0).getParent(0)
+        other = evt.getFromNodePath().node().getParent(0)
+        
+        if( other.name == "leftWall" or other.name == "rightWall"):
+            forceNode = physicsBarrel.getChildren()[1]
+            force = forceNode.getForce(0)
+            force.setVector( force.getLocalVector().x*-1,0,0 )
+            forceNode.clear()
+            forceNode.addForce(force)
+            
+        if other.name == "barrelDestroyer":
+            self.scene.node().removeChild( physicsBarrel.getParent(0) )
+        
     def throwBarrel(self):
         barrelNode = self.scene.attachNewNode("PhysicalBarrel")
         physicsBarrel = ActorNode("physics_barrel")
@@ -148,14 +199,14 @@ class DonkeyKong(ShowBase):
         cNodePath.node().addSolid(sphere)
         cNodePath.node().setFromCollideMask(0x01)
         cNodePath.node().setIntoCollideMask(0x01)
-        cNodePath.show()
+        #cNodePath.show()
         
         self.physicsCollisionPusher.addCollider(cNodePath, barrel)
         base.cTrav.addCollider(cNodePath, self.physicsCollisionPusher )
         
         barrelForceNode = ForceNode("barrelForce")
         barrel.attachNewNode(barrelForceNode)
-        barrelForce = LinearVectorForce(-1,0,0,1,False)
+        barrelForce = LinearVectorForce(-8,0,0,1,False)
         barrelForceNode.addForce(barrelForce)
         physicsBarrel.getPhysical(0).addLinearForce(barrelForce)
         
@@ -169,7 +220,7 @@ class DonkeyKong(ShowBase):
         cNodePath.node().addSolid(hitbox)
         cNodePath.node().setIntoCollideMask(mask)
         cNodePath.node().setFromCollideMask(mask)
-        cNodePath.show()
+        #cNodePath.show()
         base.cTrav.addCollider(cNodePath, self.collisionHandlerEvent)
         
         self.scene.find(f'root/{modelName}').reparentTo(obj)
@@ -179,6 +230,18 @@ class DonkeyKong(ShowBase):
         self.accept(f'into-{collisionNodeName}' , enableFunction)
         self.accept(f'outof-{collisionNodeName}' , disableFunction)
         return obj
+    
+    
+    def invisibleSquareCollider(self, px, pz, w, h, collisionNodeName, nodeName, mask ):
+        obj = self.scene.attachNewNode(nodeName)
+        hitbox = CollisionBox( Point3(0,0,0), w,5,h )
+        cNodePath = obj.attachNewNode( CollisionNode(collisionNodeName) )
+        cNodePath.node().addSolid(hitbox)
+        cNodePath.node().setIntoCollideMask(mask)
+        cNodePath.node().setFromCollideMask(mask)
+        cNodePath.show()
+        base.cTrav.addCollider(cNodePath, self.collisionHandlerEvent)
+        obj.setPos(px,0,pz)
     
     def enableJump(self, evt):
         print( evt.getIntoNodePath().node().getParent(0).getTransform().getPos() )
@@ -205,8 +268,10 @@ class DonkeyKong(ShowBase):
         p = self.player.getPos()
         
         if(self.input["left"]):
+            self.marioGfx.setSx(self.player  , 1)
             mv.x = 0.1
         if(self.input["right"]):
+            self.marioGfx.setSx(self.player  , -1)
             mv.x = -0.1
         
         if( self.jumpAvailable ):
