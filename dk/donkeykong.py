@@ -14,6 +14,8 @@ from panda3d.core import DataNode
 from panda3d.physics import *
 from direct.interval.IntervalGlobal import *
 
+from direct.gui.DirectGui import *
+
 loadPrcFileData('', 'win-size 640 480')
 #loadPrcFileData('', 'want-directtools #t')
 #loadPrcFileData('', 'want-tk #t')
@@ -142,12 +144,12 @@ class DonkeyKong(ShowBase):
         cNodePath.node().addSolid(ray)
         cNodePath.node().setIntoCollideMask(0x3)
         cNodePath.node().setFromCollideMask(0x3)
-        #cNodePath.show()
+        cNodePath.show()
         base.cTrav.addCollider(cNodePath, self.collisionHandlerEvent)
-        self.player.setPos(7,0,5)
+        
         
         self.donkeykonggfx = self.scene.find(f'root/donkeykong')
-        self.donkeykong  = self.createSquareCollider(8.7,5, 1,1,'donkeykong','dkHitbox', 'DK', self.reachedDk, self.exitDk, self.arcadeTexture, 0x01)
+        self.donkeykong  = self.createSquareCollider(8.7,5, 1,1,'donkeykong','dkHitbox', 'DK', self.reachedDk, self.exitDk, self.arcadeTexture, 0x2)
         
         self.floor1 = self.createSquareCollider(-1.8,-5.5, 9.3,.5,'floor0','floor1Hitbox', 'Floor1', self.enableJump, self.disableJump, self.blockTexture, 0x01)
         self.floor2 = self.createSquareCollider(2.08 ,-2.5, 8.0 ,.5,'floor1','floor2Hitbox', 'Floor2', self.enableJump, self.disableJump, self.blockTexture, 0x01)
@@ -186,8 +188,7 @@ class DonkeyKong(ShowBase):
         self.barrels_frames.append( 0.479941 - 0.375774)
         
         self.createDKSequence()
-        
-    
+        self.player.setPos(3,0,-3)
         return Task.done
     
     def changeDkFrame(self, dk, new_u, new_v):
@@ -204,6 +205,7 @@ class DonkeyKong(ShowBase):
         self.dk_sequence = Sequence (f1,d,f2,d,f3,th,d,f1)
         
     def reachedDk(self, evt):
+        text = DirectLabel(text = "Ganastesss!" , text_scale=(0.5,0.5) )
         print("dk entered")
     
     def exitDk(self, evt):
@@ -326,7 +328,6 @@ class DonkeyKong(ShowBase):
         obj.setPos(px,0,pz)
     
     def enableJump(self, evt):
-        print( evt.getIntoNodePath().node().getParent(0).getTransform().getPos() )
         self.lastPlayerValidZ = evt.getIntoNodePath().node().getParent(0).getTransform().getPos().z +1
         self.jumpAvailable = True
         print("enable jump")
@@ -337,6 +338,7 @@ class DonkeyKong(ShowBase):
         print("disable jump")
     
     def enableStairs(self, evt):
+        
         self.stairsAvailable = True
         print("enable stairs")
 
