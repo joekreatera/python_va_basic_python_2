@@ -10,7 +10,7 @@ from panda3d.core import CollisionSegment
 from panda3d.core import CollisionBox, CollisionSphere
 
 from panda3d.core import loadPrcFileData
-
+from panda3d.core import DataNode
 from panda3d.physics import *
 from direct.interval.IntervalGlobal import *
 
@@ -21,6 +21,13 @@ loadPrcFileData("", "textures-auto-power-2 #f")
 loadPrcFileData("", "textures-power-2 none")
 loadPrcFileData("", "textures-square none")
 
+
+class AuxNode(DataNode):
+    def __init__(self, nodeName):
+        DataNode.__init__(self, nodeName)
+        self.frame = 0
+    def setSequence(self, extraData):
+        self.sequence = extraData
 
 class DonkeyKong(ShowBase):
     def __init__(self):
@@ -44,7 +51,7 @@ class DonkeyKong(ShowBase):
         self.stairsAvailable = False
         self.lastPlayerValidZ = 0
         self.hammerTime = False
-        self.dkTimer = 0
+        self.dkTimer = 5
         
     def pressUp(self):
         print("up")
@@ -153,7 +160,7 @@ class DonkeyKong(ShowBase):
         self.rightWall = self.invisibleSquareCollider( 11.3, 0, 1, 20, "rightWallHitbox", "rightWall", 0x1 )
         
         self.barrelDestroyer = self.invisibleSquareCollider( -0.5, -10, 10.5, 1, "barrelDestroyHitBox", "barrelDestroyer", 0x1 )
-        
+        self.barrelBridge = self.invisibleSquareCollider( -0.4, 0.5, 2, 0.5, "barrelBridgeHitBox", "barrelBridge", 0x4 )
         base.enableParticles()
         self.physicsCollisionPusher = PhysicsCollisionHandler()
         gravity = ForceNode("world-forces")
@@ -166,6 +173,12 @@ class DonkeyKong(ShowBase):
         #self.accept("raw-a", self.throwBarrel)
         
         base.cTrav.showCollisions(self.render)
+        
+        self.barrels_frames = []
+        self.barrels_frames.append(0)
+        self.barrels_frames.append( 0.410573 - 0.375774)
+        self.barrels_frames.append( 0.444913 - 0.375774)
+        self.barrels_frames.append( 0.479941 - 0.375774)
         
         self.createDKSequence()
         
@@ -232,8 +245,8 @@ class DonkeyKong(ShowBase):
         sphere = CollisionSphere(0,0,0,0.5)
         cNodePath = visualBarrel.attachNewNode( CollisionNode("barrelCollider") )
         cNodePath.node().addSolid(sphere)
-        cNodePath.node().setFromCollideMask(0x01)
-        cNodePath.node().setIntoCollideMask(0x01)
+        cNodePath.node().setFromCollideMask(0x05)
+        cNodePath.node().setIntoCollideMask(0x05)
         #cNodePath.show()
         
         self.physicsCollisionPusher.addCollider(cNodePath, barrel)
@@ -244,9 +257,37 @@ class DonkeyKong(ShowBase):
         barrelForce = LinearVectorForce(-8,0,0,1,False)
         barrelForceNode.addForce(barrelForce)
         physicsBarrel.getPhysical(0).addLinearForce(barrelForce)
-        
-        
         barrelNode.setPos(self.scene, 7, 0, 4.5)
+        
+        dataNode = AuxNode("sequenceData")
+        seq = self.createBarrelSequence(visualBarrel, physicsBarrel, dataNode)
+        dataNode.setSequence(seq)
+        
+        barrelNode.attachNewNode(dataNode)
+    
+    def createBarrelSequence(self, visual, physics, dataNode):
+        def updateBarrel():
+            vel = physics.getPhysicsObject().getVelocity()
+            frame  = dataNode.frame
+            print(vel.x)
+            if(vel.x > 0 ):
+                frame = (frame + 1)%4
+                #vel.x = 5
+            if( vel.x < 0 ):
+                frame = (frame - 1)%4
+                #vel.x = -5
+            dataNode.frame = frame
+            
+            physics.getPhysicsObject().setVelocity(vel)
+            visualFrame = self.barrels_frames[frame]
+            visual.setTexOffset(TextureStage.getDefault() , visualFrame, 0.0)
+            
+        f1 = Func( updateBarrel )
+        d = Wait(0.1)
+        
+        seq = Sequence(f1,d)
+        seq.loop()
+        return seq
     
     def createSquareCollider(self,px,pz, w,h, modelName, collisionNodeName, nodeName, enableFunction, disableFunction, texture, mask ):
         obj = self.scene.attachNewNode(nodeName)
@@ -344,7 +385,7 @@ class DonkeyKong(ShowBase):
         
         self.dkTimer = self.dkTimer + globalClock.getDt()
         
-        if( self.dkTimer > 3):
+        if( self.dkTimer > 10):
             self.dk_sequence.start()
             self.dkTimer = 0
         
