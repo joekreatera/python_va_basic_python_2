@@ -84,6 +84,11 @@ class DonkeyKong(ShowBase):
         
         self.player = self.scene.attachNewNode("Player")
 
+        self.scene.find("root/barrel").setPos(0,100,0)
+
+        self.scene.find("root/walls").hide()
+
+        self.scene.find("root/rightWall").hide()
 
         # init mario gfx stuff
         self.marioGfx = self.scene.find('root/mario')
@@ -137,7 +142,7 @@ class DonkeyKong(ShowBase):
         cNodePath.node().addSolid(ray)
         cNodePath.node().setIntoCollideMask(0x3)
         cNodePath.node().setFromCollideMask(0x3)
-        cNodePath.show()
+        #cNodePath.show()
         base.cTrav.addCollider(cNodePath, self.collisionHandlerEvent)
         self.player.setPos(7,0,5)
         
@@ -172,7 +177,7 @@ class DonkeyKong(ShowBase):
         
         #self.accept("raw-a", self.throwBarrel)
         
-        base.cTrav.showCollisions(self.render)
+        #base.cTrav.showCollisions(self.render)
         
         self.barrels_frames = []
         self.barrels_frames.append(0)
@@ -241,8 +246,9 @@ class DonkeyKong(ShowBase):
         visualBarrel = barrel.attachNewNode("BarrelCopy")
         originalBarrel = self.scene.find("root/barrel")
         originalBarrel.instanceTo(visualBarrel)
+        visualBarrel.setPos(0,-100,0)
         
-        sphere = CollisionSphere(0,0,0,0.5)
+        sphere = CollisionSphere(0.16,100,0,0.5)
         cNodePath = visualBarrel.attachNewNode( CollisionNode("barrelCollider") )
         cNodePath.node().addSolid(sphere)
         cNodePath.node().setFromCollideMask(0x05)
@@ -269,7 +275,7 @@ class DonkeyKong(ShowBase):
         def updateBarrel():
             vel = physics.getPhysicsObject().getVelocity()
             frame  = dataNode.frame
-            print(vel.x)
+            
             if(vel.x > 0 ):
                 frame = (frame + 1)%4
                 #vel.x = 5
@@ -315,7 +321,7 @@ class DonkeyKong(ShowBase):
         cNodePath.node().addSolid(hitbox)
         cNodePath.node().setIntoCollideMask(mask)
         cNodePath.node().setFromCollideMask(mask)
-        cNodePath.show()
+        #cNodePath.show()
         base.cTrav.addCollider(cNodePath, self.collisionHandlerEvent)
         obj.setPos(px,0,pz)
     
