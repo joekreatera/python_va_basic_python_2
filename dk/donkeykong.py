@@ -35,6 +35,9 @@ class DonkeyKong(ShowBase):
     def __init__(self):
         super().__init__(self)
         
+        self.playerLost = False
+        self.playerWon = False
+        
         self.scene = self.loader.loadModel('models/DKSet')
         self.scene.reparentTo(self.render)
         
@@ -54,6 +57,7 @@ class DonkeyKong(ShowBase):
         self.lastPlayerValidZ = 0
         self.hammerTime = False
         self.dkTimer = 5
+        self.lifeCounter = 3
         
     def pressUp(self):
         print("up")
@@ -92,8 +96,21 @@ class DonkeyKong(ShowBase):
 
         self.scene.find("root/rightWall").hide()
 
+        self.lifes = [ 
+        self.scene.attachNewNode("life1"),
+        self.scene.attachNewNode("life2"),
+        self.scene.attachNewNode("life3"),
+        ]
         # init mario gfx stuff
         self.marioGfx = self.scene.find('root/mario')
+        self.marioGfx.instanceTo(self.lifes[0])
+        self.marioGfx.instanceTo(self.lifes[1])
+        self.marioGfx.instanceTo(self.lifes[2])
+        self.lifes[0].setPos(-9,0,7.5)
+        self.lifes[1].setPos(-10,0,7.5)
+        self.lifes[2].setPos(-11,0,7.5)
+        
+        
         self.marioGfx.reparentTo(self.player)
         self.marioGfx.setTwoSided(True)
         self.hammerDown = self.scene.find('root/hammerdowm')
@@ -205,7 +222,10 @@ class DonkeyKong(ShowBase):
         self.dk_sequence = Sequence (f1,d,f2,d,f3,th,d,f1)
         
     def reachedDk(self, evt):
-        text = DirectLabel(text = "Ganastesss!" , text_scale=(0.5,0.5) )
+        if(self.hammerTime):
+            self.playerWon = True
+        else:
+            self.playerLost = True
         print("dk entered")
     
     def exitDk(self, evt):
@@ -215,6 +235,7 @@ class DonkeyKong(ShowBase):
         self.hammerTime = True
         self.hammerSequence.loop()
         self.scene.node().removeChild( evt.getIntoNodePath().node().getParent(0) )
+    
         
     def disableHammer(self, evt):
         pass
@@ -236,6 +257,13 @@ class DonkeyKong(ShowBase):
         if other.name == "Player" :
             if( self.hammerTime):
                 self.scene.node().removeChild( physicsBarrel.getParent(0) )
+            else:
+                self.lifeCounter = self.lifeCounter - 1
+                if(self.lifeCounter < 0):
+                    self.playerLost = True
+                else:
+                    self.lifes[self.lifeCounter].hide()
+                
         
     def throwBarrel(self):
         barrelNode = self.scene.attachNewNode("PhysicalBarrel")
@@ -396,6 +424,14 @@ class DonkeyKong(ShowBase):
         if( self.dkTimer > 10):
             self.dk_sequence.start()
             self.dkTimer = 0
+        
+        if( (self.playerLost or self.playerWon) ):
+            if(self.playerLost):
+                text = DirectLabel(text = "Perdiste!!!!" , text_scale = (0.5,0.5) )
+            if(self.playerWon):
+                text = DirectLabel(text = "Ganastesss!" , text_scale=(0.5,0.5) )
+            return Task.done
+        
         
         self.applyMove()
         
