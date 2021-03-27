@@ -4,7 +4,7 @@ from direct.task import Task
 from panda3d.core import OrthographicLens
 from panda3d.core import Point3
 from panda3d.core import Vec4, Vec3
-
+from panda3d.core import TextureStage
 from panda3d.core import CollisionHandlerEvent, CollisionTraverser, CollisionNode
 from panda3d.core import CollisionSegment
 from panda3d.core import CollisionBox, CollisionSphere
@@ -44,6 +44,7 @@ class DonkeyKong(ShowBase):
         self.stairsAvailable = False
         self.lastPlayerValidZ = 0
         self.hammerTime = False
+        self.dkTimer = 0
         
     def pressUp(self):
         print("up")
@@ -133,7 +134,9 @@ class DonkeyKong(ShowBase):
         base.cTrav.addCollider(cNodePath, self.collisionHandlerEvent)
         self.player.setPos(7,0,5)
         
-        self.donkeykong  = None
+        self.donkeykonggfx = self.scene.find(f'root/donkeykong')
+        self.donkeykong  = self.createSquareCollider(8.7,5, 1,1,'donkeykong','dkHitbox', 'DK', self.reachedDk, self.exitDk, self.arcadeTexture, 0x01)
+        
         self.floor1 = self.createSquareCollider(-1.8,-5.5, 9.3,.5,'floor0','floor1Hitbox', 'Floor1', self.enableJump, self.disableJump, self.blockTexture, 0x01)
         self.floor2 = self.createSquareCollider(2.08 ,-2.5, 8.0 ,.5,'floor1','floor2Hitbox', 'Floor2', self.enableJump, self.disableJump, self.blockTexture, 0x01)
         self.floor3_1 = self.createSquareCollider(3.6 , 0.5 ,3.8,.5,'floor2','floor3_1Hitbox', 'Floor3_1', self.enableJump, self.disableJump, self.blockTexture, 0x01)
@@ -160,10 +163,33 @@ class DonkeyKong(ShowBase):
         base.physicsMgr.addLinearForce(gravityForce)
         self.accept("into-barrelCollider", self.barrelCrash)
         
-        self.accept("raw-a", self.throwBarrel)
+        #self.accept("raw-a", self.throwBarrel)
         
         base.cTrav.showCollisions(self.render)
+        
+        self.createDKSequence()
+        
+    
         return Task.done
+    
+    def changeDkFrame(self, dk, new_u, new_v):
+        dk.setTexOffset( TextureStage.getDefault() , new_u , new_v )
+    
+    def createDKSequence(self):
+        #self.donkeykonggfx 
+        f1 = Func(self.changeDkFrame, self.donkeykonggfx , 0.140867 - 0.0446603 , 0  )
+        f2 = Func(self.changeDkFrame, self.donkeykonggfx , 0.0431023 - 0.0446603 , 0.806672 - 0.703844  )
+        f3 = Func(self.changeDkFrame, self.donkeykonggfx , 0 , 0  )
+        th = Func(self.throwBarrel)
+        d= Wait(0.2)
+        
+        self.dk_sequence = Sequence (f1,d,f2,d,f3,th,d,f1)
+        
+    def reachedDk(self, evt):
+        print("dk entered")
+    
+    def exitDk(self, evt):
+        print("dk exit")
     
     def enableHammer(self, evt):
         self.hammerTime = True
@@ -220,7 +246,7 @@ class DonkeyKong(ShowBase):
         physicsBarrel.getPhysical(0).addLinearForce(barrelForce)
         
         
-        barrelNode.setPos(self.scene, -3, 0, 7)
+        barrelNode.setPos(self.scene, 7, 0, 4.5)
     
     def createSquareCollider(self,px,pz, w,h, modelName, collisionNodeName, nodeName, enableFunction, disableFunction, texture, mask ):
         obj = self.scene.attachNewNode(nodeName)
@@ -315,6 +341,12 @@ class DonkeyKong(ShowBase):
     def update(self, task):
         self.camera.setPos(0,35,0)
         self.camera.lookAt(self.scene)
+        
+        self.dkTimer = self.dkTimer + globalClock.getDt()
+        
+        if( self.dkTimer > 3):
+            self.dk_sequence.start()
+            self.dkTimer = 0
         
         self.applyMove()
         
