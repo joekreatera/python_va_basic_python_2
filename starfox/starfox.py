@@ -15,6 +15,9 @@ class Starfox(ShowBase):
         self.player = self.scene.find("player")
         self.player.setPythonTag("ObjectController" , Player(self.player) )
         
+        self.building_enemy = self.scene.find("building_enemy")
+        
+        
         base.cTrav = CollisionTraverser()
         self.CollisionHandlerEvent = CollisionHandlerEvent()
         base.enableParticles()
@@ -47,7 +50,20 @@ class Starfox(ShowBase):
         self.player.reparentTo(self.rails)
         self.player.setPos(self.rails,0,0,0)
         self.rails_y = -50
+        
+        self.createStaticEnemy(self.building_enemy, 0,50,0)
+        self.createStaticEnemy(self.building_enemy, -50,50,0)
+        self.createStaticEnemy(self.building_enemy, -100,50,0)
+        self.createStaticEnemy(self.building_enemy, -70,130,0)
+        self.createStaticEnemy(self.building_enemy, -120,80,0)
+        self.createStaticEnemy(self.building_enemy, -220,130,0)
+        self.building_enemy.hide()
 
+    def createStaticEnemy(self, original, px, py, pz):
+        be = original.copyTo(self.scene)
+        be.setPos(px,py,pz)
+        base.cTrav.addCollider( be.find("**collision**") , self.CollisionHandlerEvent )
+        
 
     def crash(self, evt):
         print(evt)
@@ -68,7 +84,7 @@ class Starfox(ShowBase):
         self.rails.setHpr( Path.getHeading(self.rails_y) , 0, 0 )
         self.camera.setHpr( Path.getHeading(self.rails_y) , 0, 0 )
         
-        self.rails_y = self.rails_y + globalClock.getDt()*10
+        self.rails_y = self.rails_y + globalClock.getDt()*20
         #self.player.setPos(self.rails, 0, 0, sin(self.z/10.0)*40 )
         
         relX, relZ = self.player.getPythonTag("ObjectController").update(self.rails, globalClock.getDt() )
