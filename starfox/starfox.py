@@ -6,6 +6,7 @@ from InputManager import InputManager
 from Player import Player
 from Path import Path
 from math import sin
+from DynamicEnemy import *
 class Starfox(ShowBase):
     def __init__(self):
         super().__init__(self)
@@ -16,7 +17,7 @@ class Starfox(ShowBase):
         self.player.setPythonTag("ObjectController" , Player(self.player) )
         
         self.building_enemy = self.scene.find("building_enemy")
-        
+        self.dynamic_enemy = self.scene.find("enemy1")
         
         base.cTrav = CollisionTraverser()
         self.CollisionHandlerEvent = CollisionHandlerEvent()
@@ -57,7 +58,15 @@ class Starfox(ShowBase):
         self.createStaticEnemy(self.building_enemy, -70,130,0)
         self.createStaticEnemy(self.building_enemy, -120,80,0)
         self.createStaticEnemy(self.building_enemy, -220,130,0)
+        
+        DynamicEnemy(self.dynamic_enemy, self.scene, Vec3(-230,140,10) ,  base.cTrav, self.CollisionHandlerEvent) 
+        DynamicEnemy(self.dynamic_enemy, self.scene, Vec3(-240,160,10) ,  base.cTrav, self.CollisionHandlerEvent) 
+        DynamicEnemy(self.dynamic_enemy, self.scene, Vec3(-250,200,10) ,  base.cTrav, self.CollisionHandlerEvent) 
+        DynamicEnemy(self.dynamic_enemy, self.scene, Vec3(-270,160,10) ,  base.cTrav, self.CollisionHandlerEvent) 
+        DynamicEnemy(self.dynamic_enemy, self.scene, Vec3(-250,200,10) ,  base.cTrav, self.CollisionHandlerEvent) 
+        
         self.building_enemy.hide()
+        self.dynamic_enemy.hide();
 
     def createStaticEnemy(self, original, px, py, pz):
         be = original.copyTo(self.scene)
@@ -84,7 +93,7 @@ class Starfox(ShowBase):
         self.rails.setHpr( Path.getHeading(self.rails_y) , 0, 0 )
         self.camera.setHpr( Path.getHeading(self.rails_y) , 0, 0 )
         
-        self.rails_y = self.rails_y + globalClock.getDt()*20
+        self.rails_y = self.rails_y + globalClock.getDt()*10
         #self.player.setPos(self.rails, 0, 0, sin(self.z/10.0)*40 )
         
         relX, relZ = self.player.getPythonTag("ObjectController").update(self.rails, globalClock.getDt() )
@@ -92,6 +101,11 @@ class Starfox(ShowBase):
         
         #print( InputManager.get_input(InputManager.arrowDown) )
         
+        enemies = self.scene.findAllMatches("dynamicEnemy")
+        for e in enemies:
+            enemy = e.getPythonTag("ObjectController")
+            enemy.update(self.scene, globalClock.getDt() )
+            
         return Task.cont
         
 sf = Starfox()
