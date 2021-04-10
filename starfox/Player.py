@@ -1,36 +1,43 @@
 from InputManager import InputManager
 
-
 class Player:
     def __init__(self, pandaNode):
         self.gameObject = pandaNode
         self.px = 0
         self.pz = 0
-        self.gameObject.setColor( 1, 1 , 1 , 1)
+        
     
     def update(self, world, dt):
-        print( InputManager.get_input(InputManager.space) )
+        #print( InputManager.get_input(InputManager.space) )
         
         up = (InputManager.get_input( InputManager.arrowUp ) )
         down = (InputManager.get_input( InputManager.arrowDown ) )
         left = (InputManager.get_input( InputManager.arrowLeft ) )
         right = (InputManager.get_input( InputManager.arrowRight ) )
     
-        vel = 1
-        if(up):
-            self.pz = self.pz + vel
+        vel = 20*dt
+        self.pz = self.pz+vel if up else self.pz
+        self.pz = self.pz-vel if down else self.pz
+        self.px = self.px+vel if right else self.px
+        self.px = self.px+-vel if left else self.px
+
+        limitZ = 12
+        limitX = 24
         
-        if(down):
-            self.pz = self.pz - vel
-    
-        if(right):
-            self.px = self.px + vel
-        
-        if(left):
-            self.px = self.px - vel
-             
+        self.pz = min( max(self.pz, -limitZ) , limitZ)
+        self.px =  min( max(self.px, -limitX) , limitX)
+
         self.gameObject.setZ( world, self.pz )
         self.gameObject.setX( world, self.px )
         
-        return self.px,self.pz
+        lx = limitX*2.0/3
+        lz = limitZ*2.0/3
         
+        relx  = max(min(lx,self.px),-lx)
+        relz = max(min(lz,self.pz),-lz)
+        
+                    
+        return relx,relz
+    
+    def crash(self, obj):
+        self.gameObject.setColor( 1, 1 , 1 , 1)
