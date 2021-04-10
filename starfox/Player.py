@@ -31,3 +31,6 @@ class Player:
              
         self.gameObject.setZ( world, self.pz )
         self.gameObject.setX( world, self.px )
+        
+        return self.px,self.pz
+        
