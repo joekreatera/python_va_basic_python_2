@@ -5,7 +5,7 @@ class Player:
         self.gameObject = pandaNode
         self.px = 0
         self.pz = 0
-        
+        self.shouldShoot = False
     
     def update(self, world, dt):
         #print( InputManager.get_input(InputManager.space) )
@@ -14,6 +14,7 @@ class Player:
         down = (InputManager.get_input( InputManager.arrowDown ) )
         left = (InputManager.get_input( InputManager.arrowLeft ) )
         right = (InputManager.get_input( InputManager.arrowRight ) )
+        shoot = (InputManager.get_input(InputManager.space) )
     
         vel = 20*dt
         self.pz = self.pz+vel if up else self.pz
@@ -35,9 +36,15 @@ class Player:
         
         relx  = max(min(lx,self.px),-lx)
         relz = max(min(lz,self.pz),-lz)
-        
+    
+        returnShoot = False;
+        if( shoot ):
+            self.shouldShoot = True
+        if( not shoot and self.shouldShoot ):
+            returnShoot = True
+            self.shouldShoot = False
                     
-        return relx,relz
+        return relx,relz, returnShoot
     
     def crash(self, obj):
         self.gameObject.setColor( 1, 1 , 1 , 1)

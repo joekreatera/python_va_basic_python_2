@@ -14,6 +14,10 @@ class DynamicEnemy:
     def __init__(self, original, world, origin ,  cTrav, collisionHandler, type=ENEMY_TYPE.KAMIKAZE , target=None , vel=None, radius = 10000):
         self.gameObject = original.copyTo(world)
         cTrav.addCollider( self.gameObject.find("**collision**") , collisionHandler )
+        
+        self.gameObject.find("**collision**").node().setFromCollideMask(0x5)
+        self.gameObject.find("**collision**").node().setIntoCollideMask(0x5)
+        
         self.type = type
         self.gameObject.setPythonTag("ObjectController", self)
         self.gameObject.setPos(world, origin)
@@ -86,3 +90,5 @@ class DynamicEnemy:
         
     def crash(self, obj):
         print(f'crashed with {obj}')
+        if (obj is not None):
+            self.gameObject.removeNode()

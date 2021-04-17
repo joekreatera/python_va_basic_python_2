@@ -7,6 +7,8 @@ from Player import Player
 from Path import Path
 from math import sin
 from DynamicEnemy import *
+from Bullet import  *
+
 class Starfox(ShowBase):
     def __init__(self):
         self.height= 500
@@ -19,7 +21,8 @@ class Starfox(ShowBase):
         
         self.building_enemy = self.scene.find("building_enemy")
         self.dynamic_enemy = self.scene.find("enemy1")
-        
+        self.bullet = self.scene.find("bullet")
+        print(self.bullet)
         base.cTrav = CollisionTraverser()
         self.CollisionHandlerEvent = CollisionHandlerEvent()
         base.enableParticles()
@@ -29,9 +32,22 @@ class Starfox(ShowBase):
         
         self.accept('into-collision_player', self.crash)
         self.accept('into-collision_plane', self.crash)
+        self.accept('into-collision_enemy', self.crash)
         
         base.cTrav.addCollider( self.scene.find("player/collision**"), self.CollisionHandlerEvent)
         base.cTrav.addCollider( self.scene.find("basePlane/collision**"), self.CollisionHandlerEvent)
+        
+        self.player.find("**collision**").node().setFromCollideMask(0x3)
+        self.player.find("**collision**").node().setIntoCollideMask(0x3)
+
+        self.dynamic_enemy.find("**collision**").node().setFromCollideMask(0x5)
+        self.dynamic_enemy.find("**collision**").node().setIntoCollideMask(0x5)
+        
+        self.building_enemy.find("**collision**").node().setFromCollideMask(0x5)
+        self.building_enemy.find("**collision**").node().setIntoCollideMask(0x5)
+        
+        
+        
         base.cTrav.showCollisions(self.render)
         
         
@@ -97,33 +113,47 @@ class Starfox(ShowBase):
         
         self.rails_y = self.rails_y + globalClock.getDt()*10
         #self.player.setPos(self.rails, 0, 0, sin(self.z/10.0)*40 )
-        
-        relX, relZ = self.player.getPythonTag("ObjectController").update(self.rails, globalClock.getDt() )
+        relX, relZ, isShooting = self.player.getPythonTag("ObjectController").update(self.rails, globalClock.getDt() )
         self.camera.setPos(self.rails, relX, -30, relZ)
-        
-        
-        # start debug section
-        """
-        levelUp = (InputManager.get_input( InputManager.keyX ) )
-        levelDown = (InputManager.get_input( InputManager.keyV ) )
-        
-        if( levelUp ):
-            self.height = self.height + 10
-        if( levelDown ):
-            self.height = self.height - 10
-            
-        
-        self.camera.setPos(self.rails.getX(), self.rails.getY() , self.height )
-        self.camera.lookAt(Vec3(self.rails.getX(), self.rails.getY(),0) )
-        """
-        # end debug section
-    
+        if( isShooting ):
+            b = Bullet(self.bullet, 
+                self.scene, 
+                self.player.getPos(self.scene), 
+                base.cTrav,
+                self.CollisionHandlerEvent, 
+                self.scene.getRelativeVector(self.player, Vec3(0,1,0) ) ,
+                40,
+                0x4
+                )    
         enemies = self.scene.findAllMatches("dynamicEnemy")
         for e in enemies:
             enemy = e.getPythonTag("ObjectController")
             enemy.update(self.scene, globalClock.getDt()  , self.player)
+        
+        bullets = self.scene.findAllMatches("bulletC")
+        for b in bullets:
+            bullet = b.getPythonTag("ObjectController")
+            bullet.update(self.scene, globalClock.getDt() ,self.player )
             
         return Task.cont
         
 sf = Starfox()
 sf.run()
+
+
+        
+        # start debug section
+"""
+levelUp = (InputManager.get_input( InputManager.keyX ) )
+levelDown = (InputManager.get_input( InputManager.keyV ) )
+
+if( levelUp ):
+    self.height = self.height + 10
+if( levelDown ):
+    self.height = self.height - 10
+    
+
+self.camera.setPos(self.rails.getX(), self.rails.getY() , self.height )
+self.camera.lookAt(Vec3(self.rails.getX(), self.rails.getY(),0) )
+"""
+# end debug section
