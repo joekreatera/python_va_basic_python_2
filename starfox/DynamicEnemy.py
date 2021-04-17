@@ -44,15 +44,44 @@ class DynamicEnemy:
             if( self.activeTime > 3):
                 self.gameObject.removeNode()
             
-    def updateChaser():
-        pass        
+    def updateChaser(self, world, dt , player):
         
+        dir = player.getPos(world) - self.gameObject.getPos(world)
+        distance = dir.length()
+        
+        if(self.state == ENEMY_STATE.IDLE and distance <= 1200):
+            print("attack")
+            self.state = ENEMY_STATE.CHASE
+            player_point_forward =  player.getPos(world)  + world.getRelativeVector(player, Vec3(0,1,0) )*40
+            self.vel = (player_point_forward - self.gameObject.getPos(world) )
+            self.vel.normalize()    
+        
+        if( self.state == ENEMY_STATE.CHASE and distance >= 50  ):
+            self.gameObject.setPos(world, self.gameObject.getPos(world) + self.vel*dt*60 )
+            self.state = ENEMY_STATE.ATTACK
+            self.activeTime = 0
+        
+        if( self.state == ENEMY_STATE.ATTACK):
+            self.activeTime = self.activeTime - dt
+            if( self.activeTime <= 0):
+                self.activeTime = 1
+                player_point_forward =  player.getPos(world)  + world.getRelativeVector(player, Vec3(0,1,0) )*40
+                self.gotoPos = player_point_forward
+
+            
+            pos = player.getPos(world)
+            pos.setZ( self.gameObject.getPos(world).getZ() + (self.gotoPos.getZ() - self.gameObject.getPos(world).getZ())*dt*2  )
+             
+            self.gameObject.setPos(world, pos + world.getRelativeVector(player, Vec3(0,1,0) )*40  )
         
     def update(self, world, dt , player):
-        self.gameObject.setColor(random() , random() , random() , 1)
+        self.gameObject.setColor(1 , 0 , 1 , 1)
         
         if( self.type == ENEMY_TYPE.KAMIKAZE ):
             self.updateKamikaze( world, dt , player )
+        
+        if( self.type == ENEMY_TYPE.CHASER ):
+            self.updateChaser( world, dt , player )
         
         
     def crash(self, obj):
