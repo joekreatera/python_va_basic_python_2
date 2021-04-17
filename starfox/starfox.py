@@ -9,6 +9,7 @@ from math import sin
 from DynamicEnemy import *
 class Starfox(ShowBase):
     def __init__(self):
+        self.height= 500
         super().__init__(self)
         self.scene = self.loader.loadModel("./models/world.egg")
         self.scene.reparentTo(self.render)
@@ -59,11 +60,11 @@ class Starfox(ShowBase):
         self.createStaticEnemy(self.building_enemy, -120,80,0)
         self.createStaticEnemy(self.building_enemy, -220,130,0)
         
-        DynamicEnemy(self.dynamic_enemy, self.scene, Vec3(-230,140,10) ,  base.cTrav, self.CollisionHandlerEvent) 
-        DynamicEnemy(self.dynamic_enemy, self.scene, Vec3(-240,160,10) ,  base.cTrav, self.CollisionHandlerEvent) 
-        DynamicEnemy(self.dynamic_enemy, self.scene, Vec3(-250,200,10) ,  base.cTrav, self.CollisionHandlerEvent) 
-        DynamicEnemy(self.dynamic_enemy, self.scene, Vec3(-270,160,10) ,  base.cTrav, self.CollisionHandlerEvent) 
-        DynamicEnemy(self.dynamic_enemy, self.scene, Vec3(-250,200,10) ,  base.cTrav, self.CollisionHandlerEvent) 
+        DynamicEnemy(self.dynamic_enemy, self.scene, Vec3(-230,140,10) ,  base.cTrav, self.CollisionHandlerEvent , radius = 80) 
+        #DynamicEnemy(self.dynamic_enemy, self.scene, Vec3(-240,160,10) ,  base.cTrav, self.CollisionHandlerEvent) 
+        #DynamicEnemy(self.dynamic_enemy, self.scene, Vec3(-250,200,10) ,  base.cTrav, self.CollisionHandlerEvent) 
+        #DynamicEnemy(self.dynamic_enemy, self.scene, Vec3(-270,160,10) ,  base.cTrav, self.CollisionHandlerEvent) 
+        #DynamicEnemy(self.dynamic_enemy, self.scene, Vec3(-250,200,10) ,  base.cTrav, self.CollisionHandlerEvent) 
         
         self.building_enemy.hide()
         self.dynamic_enemy.hide();
@@ -88,23 +89,39 @@ class Starfox(ShowBase):
 
     def update(self, evt):        
         #self.camera.setPos(0,-100,100)
-        #self.camera.lookAt(self.player)
+        
+        # -> self.camera.lookAt(self.player)
         self.rails.setPos(self.scene,  Path.getXOfY(self.rails_y) , self.rails_y  , 12.4)
         self.rails.setHpr( Path.getHeading(self.rails_y) , 0, 0 )
-        self.camera.setHpr( Path.getHeading(self.rails_y) , 0, 0 )
+        # -> self.camera.setHpr( Path.getHeading(self.rails_y) , 0, 0 )
         
         self.rails_y = self.rails_y + globalClock.getDt()*10
         #self.player.setPos(self.rails, 0, 0, sin(self.z/10.0)*40 )
         
         relX, relZ = self.player.getPythonTag("ObjectController").update(self.rails, globalClock.getDt() )
-        self.camera.setPos(self.rails, relX, -30, relZ)
+        # -> self.camera.setPos(self.rails, relX, -30, relZ)
         
-        #print( InputManager.get_input(InputManager.arrowDown) )
         
+        # start debug section
+        
+        levelUp = (InputManager.get_input( InputManager.keyX ) )
+        levelDown = (InputManager.get_input( InputManager.keyV ) )
+        
+        if( levelUp ):
+            self.height = self.height + 10
+        if( levelDown ):
+            self.height = self.height - 10
+            
+        
+        self.camera.setPos(self.rails.getX(), self.rails.getY() , self.height )
+        self.camera.lookAt(Vec3(self.rails.getX(), self.rails.getY(),0) )
+        
+        # end debug section
+    
         enemies = self.scene.findAllMatches("dynamicEnemy")
         for e in enemies:
             enemy = e.getPythonTag("ObjectController")
-            enemy.update(self.scene, globalClock.getDt() )
+            enemy.update(self.scene, globalClock.getDt()  , self.player)
             
         return Task.cont
         

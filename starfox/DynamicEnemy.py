@@ -23,10 +23,37 @@ class DynamicEnemy:
         self.state = ENEMY_STATE.IDLE
         self.radius = radius
         self.gameObject.setName("dynamicEnemy")
+        self.activeTime = 0
     
-    def update(self, world, dt):
+    
+    def updateKamikaze(self, world, dt , player):
+        dir = player.getPos(world) - self.gameObject.getPos(world)
+        distance = dir.length()
+        
+        if(self.state == ENEMY_STATE.IDLE and distance <= 80):
+            print("attack")
+            self.state = ENEMY_STATE.ATTACK
+            player_point_forward =  player.getPos(world)  + world.getRelativeVector(player, Vec3(0,1,0) )*40
+            self.vel = (player_point_forward - self.gameObject.getPos(world) )
+            self.vel.normalize()
+            
+        if( self.state == ENEMY_STATE.ATTACK):
+            #pass
+            self.gameObject.setPos(world, self.gameObject.getPos(world) + self.vel*dt*60 )
+            self.activeTime = self.activeTime + dt
+            if( self.activeTime > 3):
+                self.gameObject.removeNode()
+            
+    def updateChaser():
+        pass        
+        
+        
+    def update(self, world, dt , player):
         self.gameObject.setColor(random() , random() , random() , 1)
-        print("updating")
+        
+        if( self.type == ENEMY_TYPE.KAMIKAZE ):
+            self.updateKamikaze( world, dt , player )
+        
         
     def crash(self, obj):
         print(f'crashed with {obj}')
