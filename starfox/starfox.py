@@ -8,6 +8,7 @@ from Path import Path
 from math import sin
 from DynamicEnemy import *
 from Bullet import  *
+from direct.particles.ParticleEffect import ParticleEffect
 
 class Starfox(ShowBase):
     def __init__(self):
@@ -128,7 +129,7 @@ class Starfox(ShowBase):
         enemies = self.scene.findAllMatches("dynamicEnemy")
         for e in enemies:
             enemy = e.getPythonTag("ObjectController")
-            enemy.update(self.scene, globalClock.getDt()  , self.player)
+            enemy.update(self.scene, globalClock.getDt()  , self.player , self.bullet)
         
         bullets = self.scene.findAllMatches("bulletC")
         for b in bullets:

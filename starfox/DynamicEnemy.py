@@ -28,6 +28,10 @@ class DynamicEnemy:
         self.radius = radius
         self.gameObject.setName("dynamicEnemy")
         self.activeTime = 0
+        
+        self.bulletTimer = 5
+        self.cTrav = cTrav
+        self.collisionHandler = collisionHandler
     
     
     def updateKamikaze(self, world, dt , player):
@@ -48,7 +52,7 @@ class DynamicEnemy:
             if( self.activeTime > 3):
                 self.gameObject.removeNode()
             
-    def updateChaser(self, world, dt , player):
+    def updateChaser(self, world, dt , player , bullet):
         
         dir = player.getPos(world) - self.gameObject.getPos(world)
         distance = dir.length()
@@ -71,6 +75,19 @@ class DynamicEnemy:
                 self.activeTime = 1
                 player_point_forward =  player.getPos(world)  + world.getRelativeVector(player, Vec3(0,1,0) )*40
                 self.gotoPos = player_point_forward
+            
+            self.bulletTimer = self.bulletTimer - dt
+            if(self.bulletTimer <= 0):
+                self.bulletTimer = 5
+                b = Bullet(bullet, 
+                    world, 
+                    self.gameObject.getPos(world), 
+                    self.cTrav,
+                    self.collisionHandler,
+                    self.scene.getRelativeVector(self.gameObject, Vec3(0,1,0) ) ,
+                    40,
+                    0x2
+                    )   
 
             
             pos = player.getPos(world)
@@ -78,14 +95,14 @@ class DynamicEnemy:
              
             self.gameObject.setPos(world, pos + world.getRelativeVector(player, Vec3(0,1,0) )*40  )
         
-    def update(self, world, dt , player):
+    def update(self, world, dt , player, bullet):
         self.gameObject.setColor(1 , 0 , 1 , 1)
         
         if( self.type == ENEMY_TYPE.KAMIKAZE ):
             self.updateKamikaze( world, dt , player )
         
         if( self.type == ENEMY_TYPE.CHASER ):
-            self.updateChaser( world, dt , player )
+            self.updateChaser( world, dt , player, bullet )
         
         
     def crash(self, obj):
