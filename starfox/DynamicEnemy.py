@@ -1,6 +1,8 @@
 from enum import Enum
 from panda3d.core import Vec3
 from random import random
+from Bullet import *
+
 class ENEMY_TYPE(Enum):
     KAMIKAZE = 0
     CHASER = 1
@@ -84,7 +86,7 @@ class DynamicEnemy:
                     self.gameObject.getPos(world), 
                     self.cTrav,
                     self.collisionHandler,
-                    self.scene.getRelativeVector(self.gameObject, Vec3(0,1,0) ) ,
+                    world.getRelativeVector(self.gameObject, Vec3(0,1,0) ) ,
                     40,
                     0x2
                     )   
@@ -97,7 +99,7 @@ class DynamicEnemy:
         
     def update(self, world, dt , player, bullet):
         self.gameObject.setColor(1 , 0 , 1 , 1)
-        
+        self.gameObject.lookAt(player)
         if( self.type == ENEMY_TYPE.KAMIKAZE ):
             self.updateKamikaze( world, dt , player )
         
