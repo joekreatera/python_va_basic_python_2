@@ -13,6 +13,11 @@ from direct.filter.CommonFilters import CommonFilters
 from panda3d.core import DirectionalLight, AmbientLight, PointLight, Fog
 from direct.showbase import Audio3DManager
 
+from direct.gui.DirectGui import *
+from direct.gui.OnscreenText import OnscreenText
+from direct.gui.OnscreenImage import OnscreenImage
+from panda3d.core import TextNode
+
 loadPrcFileData("" , "audio-library-name p3fmod_audio")
 loadPrcFileData("", "fmod-use-surround-sound true")
 
@@ -120,16 +125,50 @@ class Starfox(ShowBase):
         self.render.setShaderAuto()
         
         self.initSounds()
+        self.initUI()
+        self.onGame = False
+
+    def initUI(self):
+        self.font = loader.loadFont('./fonts/Magenta.ttf')
+        
+        self.lifes = [
+            OnscreenImage(image='./UI/fox-icon-png-8.png', pos = (1.1, 0, 0.8), scale = 0.05),
+            OnscreenImage(image='./UI/fox-icon-png-8.png', pos = (1.2, 0, 0.8), scale = 0.05)
+        ]
+        
+        self.lifes[0].setTransparency(True)
+        self.lifes[1].setTransparency(True)
+        
+        self.dialogScreen = DirectDialog(
+            frameSize = (-0.7,0.7, -0.7, 0.7),
+            relief = DGG.FLAT
+        )
+        
+        self.titleUI = DirectLabel(
+            text = "Starfox Region 4",
+            parent = self.dialogScreen,
+            scale = 0.1,
+            pos= (0,0,.2),
+            text_font = self.font
+        )
+        
+        self.btn = DirectButton( text = "Start" , command = self.startGame , pos = (0,0,0) , parent = self.dialogScreen , scale=0.07)
+        
+    def startGame(self):
+        self.dialogScreen.hide()
+        self.flyingSound.play()
+        self.onGame = True
+        self.btn.hide()
 
     def initSounds(self):
         self.audio3d = Audio3DManager.Audio3DManager(base.sfxManagerList[0] , self.camera)
         
-        flyingSound = self.audio3d.loadSfx("./sounds/great fox flying.mp3")
-        flyingSound.setLoop(True)
-        flyingSound.play()
+        self.flyingSound = self.audio3d.loadSfx("./sounds/great fox flying.mp3")
+        self.flyingSound.setLoop(True)
         
-        self.audio3d.attachSoundToObject(flyingSound, self.player)
-        self.audio3d.setSoundVelocityAuto(flyingSound)
+        
+        self.audio3d.attachSoundToObject(self.flyingSound, self.player)
+        self.audio3d.setSoundVelocityAuto(self.flyingSound)
         self.audio3d.setListenerVelocityAuto()
         #self.audio3d.setDistanceFactor(100)
         self.audio3d.setDropOffFactor(0)
@@ -168,37 +207,39 @@ class Starfox(ShowBase):
     def update(self, evt):        
         #self.camera.setPos(0,-100,100)
         
+        
         self.camera.lookAt(self.player)
         self.rails.setPos(self.scene,  Path.getXOfY(self.rails_y) , self.rails_y  , 12.4)
         self.rails.setHpr( Path.getHeading(self.rails_y) , 0, 0 )
         self.dirLight.color = ( self.rails_y/600  ,0.7,1,1)
         self.camera.setHpr( Path.getHeading(self.rails_y) , 0, 0 )
         
-        self.rails_y = self.rails_y + globalClock.getDt()*10
-        #self.player.setPos(self.rails, 0, 0, sin(self.z/10.0)*40 )
-        relX, relZ, isShooting = self.player.getPythonTag("ObjectController").update(self.rails, globalClock.getDt() )
-        self.camera.setPos(self.rails, relX, -30, relZ)
-        if( isShooting ):
-            self.fireSound.play()
-            b = Bullet(self.bullet, 
-                self.scene, 
-                self.player.getPos(self.scene), 
-                base.cTrav,
-                self.CollisionHandlerEvent, 
-                self.scene.getRelativeVector(self.player, Vec3(0,1,0) ) ,
-                40,
-                0x4
-                )    
-        enemies = self.scene.findAllMatches("dynamicEnemy")
-        for e in enemies:
-            enemy = e.getPythonTag("ObjectController")
-            enemy.update(self.scene, globalClock.getDt()  , self.player , self.bullet)
-        
-        bullets = self.scene.findAllMatches("bulletC")
-        for b in bullets:
-            bullet = b.getPythonTag("ObjectController")
-            bullet.update(self.scene, globalClock.getDt() ,self.player )
+        if( self.onGame ):
+            self.rails_y = self.rails_y + globalClock.getDt()*10
+            #self.player.setPos(self.rails, 0, 0, sin(self.z/10.0)*40 )
+            relX, relZ, isShooting = self.player.getPythonTag("ObjectController").update(self.rails, globalClock.getDt() )
+            self.camera.setPos(self.rails, relX, -30, relZ)
+            if( isShooting ):
+                self.fireSound.play()
+                b = Bullet(self.bullet, 
+                    self.scene, 
+                    self.player.getPos(self.scene), 
+                    base.cTrav,
+                    self.CollisionHandlerEvent, 
+                    self.scene.getRelativeVector(self.player, Vec3(0,1,0) ) ,
+                    40,
+                    0x4
+                    )    
+            enemies = self.scene.findAllMatches("dynamicEnemy")
+            for e in enemies:
+                enemy = e.getPythonTag("ObjectController")
+                enemy.update(self.scene, globalClock.getDt()  , self.player , self.bullet)
             
+            bullets = self.scene.findAllMatches("bulletC")
+            for b in bullets:
+                bullet = b.getPythonTag("ObjectController")
+                bullet.update(self.scene, globalClock.getDt() ,self.player )
+                
         return Task.cont
         
 sf = Starfox()
