@@ -5,7 +5,7 @@ class Bullet:
         self.gameObject = original.copyTo(world)
         self.gameObject.setPos(origin)
         self.velocity = fwd*velMag
-        
+        self.gameObject.setLightOff()
         cTrav.addCollider( self.gameObject.find("**collision**") , collisionHandler)
         self.gameObject.setPythonTag("ObjectController" , self)
         self.gameObject.find("**collision**").node().setFromCollideMask(colMask)

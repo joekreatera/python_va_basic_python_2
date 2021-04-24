@@ -9,21 +9,35 @@ from math import sin
 from DynamicEnemy import *
 from Bullet import  *
 from direct.particles.ParticleEffect import ParticleEffect
+from direct.filter.CommonFilters import CommonFilters
+from panda3d.core import DirectionalLight, AmbientLight, PointLight, Fog
+from direct.showbase import Audio3DManager
+
+loadPrcFileData("" , "audio-library-name p3fmod_audio")
+loadPrcFileData("", "fmod-use-surround-sound true")
 
 class Starfox(ShowBase):
     def __init__(self):
         self.height= 500
         super().__init__(self)
         self.scene = self.loader.loadModel("./models/world.egg")
+        playerTexture = loader.loadTexture("models/starfoxShip.jpg")
+        enemyTexture = loader.loadTexture("models/enemyShip.jpg")
+        bulletTexture = loader.loadTexture("models/shot.png")
         self.scene.reparentTo(self.render)
+        
+        base.setBackgroundColor(0.1,0.1, 0.1, 1)
         
         self.player = self.scene.find("player")
         self.player.setPythonTag("ObjectController" , Player(self.player) )
+        self.player.setTexture(playerTexture)
         
         self.building_enemy = self.scene.find("building_enemy")
         self.dynamic_enemy = self.scene.find("enemy1")
+        self.dynamic_enemy.setTexture(enemyTexture)
         self.bullet = self.scene.find("bullet")
-        print(self.bullet)
+        self.bullet.setTexture(bulletTexture)
+        
         base.cTrav = CollisionTraverser()
         self.CollisionHandlerEvent = CollisionHandlerEvent()
         base.enableParticles()
@@ -49,7 +63,7 @@ class Starfox(ShowBase):
         
         
         
-        base.cTrav.showCollisions(self.render)
+        #base.cTrav.showCollisions(self.render)
         
         
         self.taskMgr.add(self.update, "update")
@@ -85,15 +99,62 @@ class Starfox(ShowBase):
         
         self.building_enemy.hide()
         self.dynamic_enemy.hide();
+        
+        self.fog = Fog("fog")
+        self.fog.setColor(0.1,0.1, 0.1)
+        self.fog.setExpDensity(.3)
+        self.fog.setLinearRange(50,150)
+        self.fog.setLinearFallback(45,160,320)
+        self.render.setFog(self.fog)
+        
+        self.dirLight = DirectionalLight("dir light")
+        self.dirLight.color = (0.7,0.7,1,1)
+        self.dirLightPath = self.render.attachNewNode(self.dirLight)
+        self.dirLightPath.setHpr(45,-45,0)
+        self.dirLight.setShadowCaster(True,512,512)
+        render.setLight(self.dirLightPath)
+        
+        filters = CommonFilters(base.win, base.cam)
+        filters.setBloom(size="large", mintrigger=0.2)
+        
+        self.render.setShaderAuto()
+        
+        self.initSounds()
+
+    def initSounds(self):
+        self.audio3d = Audio3DManager.Audio3DManager(base.sfxManagerList[0] , self.camera)
+        
+        flyingSound = self.audio3d.loadSfx("./sounds/great fox flying.mp3")
+        flyingSound.setLoop(True)
+        flyingSound.play()
+        
+        self.audio3d.attachSoundToObject(flyingSound, self.player)
+        self.audio3d.setSoundVelocityAuto(flyingSound)
+        self.audio3d.setListenerVelocityAuto()
+        #self.audio3d.setDistanceFactor(100)
+        self.audio3d.setDropOffFactor(0)
+        
+        self.fireSound = self.audio3d.loadSfx("./sounds/arwing double laser one shot.mp3")
+        self.crashSound = self.audio3d.loadSfx("./sounds/break.mp3")
 
     def createStaticEnemy(self, original, px, py, pz):
         be = original.copyTo(self.scene)
         be.setPos(px,py,pz)
         base.cTrav.addCollider( be.find("**collision**") , self.CollisionHandlerEvent )
         
+        """
+        self.pointLight = PointLight("point light")
+        self.pointLight.color = (1,1,1,1)
+        self.pointLightPath = self.render.attachNewNode(self.pointLight)
+        self.pointLightPath.setPos(px,py,pz)
+        self.pointLight.attenuation = (1,0,0)
+        #self.pointLight.setShadowCaster(True,1024,1024)
+        self.render.setLight(self.pointLightPath)
+        """
 
     def crash(self, evt):
         print(evt)
+        self.crashSound.play()
         objectInto = evt.getIntoNodePath().node().getParent(0).getPythonTag("ObjectController")
         objectFrom = evt.getFromNodePath().node().getParent(0).getPythonTag("ObjectController")
         
@@ -110,6 +171,7 @@ class Starfox(ShowBase):
         self.camera.lookAt(self.player)
         self.rails.setPos(self.scene,  Path.getXOfY(self.rails_y) , self.rails_y  , 12.4)
         self.rails.setHpr( Path.getHeading(self.rails_y) , 0, 0 )
+        self.dirLight.color = ( self.rails_y/600  ,0.7,1,1)
         self.camera.setHpr( Path.getHeading(self.rails_y) , 0, 0 )
         
         self.rails_y = self.rails_y + globalClock.getDt()*10
@@ -117,6 +179,7 @@ class Starfox(ShowBase):
         relX, relZ, isShooting = self.player.getPythonTag("ObjectController").update(self.rails, globalClock.getDt() )
         self.camera.setPos(self.rails, relX, -30, relZ)
         if( isShooting ):
+            self.fireSound.play()
             b = Bullet(self.bullet, 
                 self.scene, 
                 self.player.getPos(self.scene), 
