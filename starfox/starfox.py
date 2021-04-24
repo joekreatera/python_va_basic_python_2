@@ -144,6 +144,9 @@ class Starfox(ShowBase):
             relief = DGG.FLAT
         )
         
+        s = OnscreenImage(image='./UI/fox-icon-png-8.png', pos = (0, 0, -0.2), scale = 0.20, parent = self.dialogScreen)
+        s.setTransparency(True)
+        
         self.titleUI = DirectLabel(
             text = "Starfox Region 4",
             parent = self.dialogScreen,
@@ -192,7 +195,7 @@ class Starfox(ShowBase):
         """
 
     def crash(self, evt):
-        print(evt)
+        
         self.crashSound.play()
         objectInto = evt.getIntoNodePath().node().getParent(0).getPythonTag("ObjectController")
         objectFrom = evt.getFromNodePath().node().getParent(0).getPythonTag("ObjectController")
@@ -202,11 +205,28 @@ class Starfox(ShowBase):
 
         if( objectFrom != None):
             objectFrom.crash(objectInto)
-        
-
+            
+        lifes = self.player.getPythonTag("ObjectController").getLifes()
+        if(lifes <= 0):
+            self.onGame = False
+            self.dialogScreen.show()
+            self.flyingSound.stop()
+            
     def update(self, evt):        
         #self.camera.setPos(0,-100,100)
         
+        lifes = self.player.getPythonTag("ObjectController").getLifes()
+        
+        if( lifes > 2):
+            self.lifes[0].show()
+            self.lifes[1].show()
+        elif( lifes > 1):
+            self.lifes[0].show()
+            self.lifes[1].hide()
+        elif( lifes > 0):
+            self.lifes[0].hide()
+            self.lifes[1].hide()
+             
         
         self.camera.lookAt(self.player)
         self.rails.setPos(self.scene,  Path.getXOfY(self.rails_y) , self.rails_y  , 12.4)

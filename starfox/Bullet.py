@@ -14,13 +14,14 @@ class Bullet:
         self.gameObject.setName("bulletC")
         self.activeTime = 0
         print("bullet created!")
+        
+        self.processedCrash = False
     
     def update(self, world, dt , player):
         #self.gameObject.find("**visual**").lookAt(player)
         #print(f" {self.velocity} ")
         self.gameObject.setPos(world, self.gameObject.getPos(world) + self.velocity*dt )
         
-    def crash(self, other):
-        print("crash bullet")
+    def crash(self, other):    
         if( type(other) is not Bullet ):
             self.gameObject.removeNode()

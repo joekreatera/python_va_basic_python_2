@@ -1,15 +1,17 @@
 from InputManager import InputManager
-
+from Bullet import  *
 class Player:
     def __init__(self, pandaNode):
         self.gameObject = pandaNode
         self.px = 0
         self.pz = 0
         self.shouldShoot = False
+        self.lifes = 3
+        self.canProcessCrash = True
     
     def update(self, world, dt):
         #print( InputManager.get_input(InputManager.space) )
-        
+        self.canProcessCrash = True
         up = (InputManager.get_input( InputManager.arrowUp ) )
         down = (InputManager.get_input( InputManager.arrowDown ) )
         left = (InputManager.get_input( InputManager.arrowLeft ) )
@@ -47,4 +49,12 @@ class Player:
         return relx,relz, returnShoot
     
     def crash(self, obj):
-        self.gameObject.setColor( 1, 1 , 1 , 1)
+    
+        if( self.canProcessCrash):
+            self.canProcessCrash = False
+            self.lifes = self.lifes - 1
+            #self.gameObject.setColor( 1, 1 , 1 , 1)
+                
+        
+    def getLifes(self):
+        return self.lifes
